@@ -20,7 +20,7 @@ case object Identifier extends TokenType
 
 sealed trait Literal extends TokenType
 case object StringLiteral extends Literal
-case object IdStringLiteral extends Literal
+//case object IdStringLiteral extends Literal
 case object IntegerLiteral extends Literal
 case object FloatPointLiteral extends Literal
 

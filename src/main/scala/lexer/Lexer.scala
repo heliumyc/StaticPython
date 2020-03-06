@@ -18,7 +18,7 @@ class Lexer(input: Reader) {
 
     private val escapeMap = Map('a' -> '\u0007', 'b' -> '\u0008', 'f' -> '\u000C', 'n' -> '\n', 'r' -> '\r',
         't' -> '\t', 'v' -> '\u000b', '\\' -> '\\', '\'' -> '\'', '\"' -> '\"')
-    private val idStringPattern: Regex = """^([a-zA-Z][a-zA-Z0-9]*)|(\[[a-zA-Z][a-zA-Z0-9]*\])""".r
+//    private val idStringPattern: Regex = """^([a-zA-Z][a-zA-Z0-9]*)|(\[[a-zA-Z][a-zA-Z0-9]*\])""".r
     private val numberParser = new NumberParser
 
     private var blockStack: List[Char] = List()
@@ -226,11 +226,7 @@ class Lexer(input: Reader) {
             }
         } while (!endOfString)
 
-        val lexemeStr = lexeme.toString()
-        lexemeStr match {
-            case idStringPattern(_*) => Token(IdStringLiteral, lexemeStr)
-            case _ => Token(StringLiteral, lexemeStr)
-        }
+        Token(StringLiteral, lexeme.toString())
     }
 
     private def getNumber: Token = {
