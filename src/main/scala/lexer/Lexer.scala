@@ -24,6 +24,7 @@ class Lexer(input: Reader) {
     private var blockStack: List[Char] = List()
     private val blockEndSet = Set(')', ']', '}')
     private val blockMap = Map('(' -> ')', '[' -> ']', '{' -> '}')
+    private var isEof = false
 
     private implicit var curPosition: Position = _
 
@@ -64,6 +65,8 @@ class Lexer(input: Reader) {
         }
     }
 
+    def hasNextToken: Boolean = !isEof
+
     @scala.annotation.tailrec
     final def getToken: Token = {
         if (tokenBuffer.nonEmpty) {
@@ -84,6 +87,7 @@ class Lexer(input: Reader) {
                         (1 to Util.removeFrontUntil[Int](indentStack, _==0)).map(_=>{Token(Dedent) +=: tokenBuffer})
                         return Token(NewLine)
                     } else {
+                        isEof = true
                         return Token(EndOfFile)
                     }
             }
