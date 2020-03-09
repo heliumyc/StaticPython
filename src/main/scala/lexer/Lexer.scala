@@ -1,10 +1,7 @@
 package lexer
 
 import java.io.{BufferedReader, Reader}
-
 import utils.Util
-
-import scala.util.matching.Regex
 import scala.collection.mutable
 
 class Lexer(input: Reader) {
@@ -18,14 +15,11 @@ class Lexer(input: Reader) {
 
     private val escapeMap = Map('a' -> '\u0007', 'b' -> '\u0008', 'f' -> '\u000C', 'n' -> '\n', 'r' -> '\r',
         't' -> '\t', 'v' -> '\u000b', '\\' -> '\\', '\'' -> '\'', '\"' -> '\"')
-//    private val idStringPattern: Regex = """^([a-zA-Z][a-zA-Z0-9]*)|(\[[a-zA-Z][a-zA-Z0-9]*\])""".r
     private val numberParser = new NumberParser
-
     private var blockStack: List[Char] = List()
     private val blockEndSet = Set(')', ']', '}')
     private val blockMap = Map('(' -> ')', '[' -> ']', '{' -> '}')
     private var isEof = false
-
     private implicit var curPosition: Position = _
 
     private def nextLine: Option[String] = {
@@ -190,7 +184,6 @@ class Lexer(input: Reader) {
     @scala.annotation.tailrec
     private def getOperator(opLength: Int): Token = {
         // curChar is already in map, we have to peek into the next two to see whether they form a valid operator
-        // that is we use greedy strategy
         // this method ASSUME that the first char of dual op and triplet op in covered in single op
         if (opLength == 0) {
             Token(SyntaxError, "Unrecognized operator")
@@ -229,12 +222,10 @@ class Lexer(input: Reader) {
                     }
             }
         } while (!endOfString)
-
         Token(StringLiteral, lexeme.toString())
     }
 
     private def getNumber: Token = {
-        // assert rest is not empty
         numberParser.parse(bufferLine.substring(ptr)) match {
             case (_, -1) => Token(SyntaxError, "Invalid number")
             case (v, 1) =>
