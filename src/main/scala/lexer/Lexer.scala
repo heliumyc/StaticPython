@@ -12,7 +12,6 @@ class Lexer(input: Reader) {
     private var line: Int = 0
     private val indentStack = 0 +=: mutable.ListBuffer[Int]()
     private val tokenBuffer = mutable.ListBuffer[Token]()
-
     private val escapeMap = Map('a' -> '\u0007', 'b' -> '\u0008', 'f' -> '\u000C', 'n' -> '\n', 'r' -> '\r',
         't' -> '\t', 'v' -> '\u000b', '\\' -> '\\', '\'' -> '\'', '\"' -> '\"')
     private val numberParser = new NumberParser
@@ -21,10 +20,9 @@ class Lexer(input: Reader) {
     private val blockMap = Map('(' -> ')', '[' -> ']', '{' -> '}')
     private var isEof = false
     private implicit var curPosition: Position = _
+    Token(StartOfFile) +=: tokenBuffer // add start token
 
-    private def nextLine: Option[String] = {
-        Option(reader.readLine())
-    }
+    private def nextLine: Option[String] = Option(reader.readLine())
 
     private def nextChar: Option[Char] = {
         if (ptr < bufferLine.length) {
@@ -62,7 +60,7 @@ class Lexer(input: Reader) {
     def hasNextToken: Boolean = !isEof
 
     def peekToken(k: Int): Option[Token] = {
-        while (hasNextToken && tokenBuffer.size < k ) {
+        while (hasNextToken && tokenBuffer.size < k) {
             tokenBuffer.addOne(_getToken)
         }
         if (tokenBuffer.size >= k)
