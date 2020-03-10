@@ -61,8 +61,24 @@ class Lexer(input: Reader) {
 
     def hasNextToken: Boolean = !isEof
 
+    def peekToken(k: Int): Option[Token] = {
+        while (hasNextToken && tokenBuffer.size < k ) {
+            tokenBuffer.addOne(_getToken)
+        }
+        if (tokenBuffer.size >= k)
+            Some(tokenBuffer(k))
+        else
+            None
+    }
+
+    def getToken: Token = {
+        if (tokenBuffer.isEmpty)
+            _getToken +=: tokenBuffer
+        tokenBuffer.remove(0)
+    }
+
     @scala.annotation.tailrec
-    final def getToken: Token = {
+    private def _getToken: Token = {
         if (tokenBuffer.nonEmpty) {
             return tokenBuffer.remove(0)
         }
@@ -107,7 +123,7 @@ class Lexer(input: Reader) {
 
         curPosition = Position(line, ptr+1)
         peekNextChar() match {
-            case None => getToken
+            case None => _getToken
             case Some(c) =>
                 if (c == '\"' || c == '\'') {
                     consumeNextKChar(1)
@@ -115,7 +131,7 @@ class Lexer(input: Reader) {
                 } else if (c == '#') {
                     // ignore the rest of line if encountered comment
                     ptr = bufferLine.length
-                    getToken
+                    _getToken
                 } else if (c.isLetter || c == '_') {
                     getIdentifierOrKeyword
                 } else if (c.isDigit) {
@@ -140,7 +156,7 @@ class Lexer(input: Reader) {
                 } else if (c == ' ' || c == '\t') {
                     // space between tokens
                     consumeNextKChar(1)
-                    getToken
+                    _getToken
                 } else {
                     consumeNextKChar(1)
                     Token(SyntaxError, "Unrecognized Symbol")
