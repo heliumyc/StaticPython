@@ -59,7 +59,7 @@ class Lexer(input: Reader) {
 
     def hasNextToken: Boolean = !isEof
 
-    def peekToken(k: Int): Option[Token] = {
+    def peekToken(k: Int = 1): Option[Token] = {
         while (hasNextToken && tokenBuffer.size < k) {
             tokenBuffer.addOne(_getToken)
         }
