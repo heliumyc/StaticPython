@@ -1,216 +1,216 @@
 package lexer
 
-case class Token(tokenType: TokenType, value: String = "")(implicit val position: Position) {
-    override def toString: String = s"<$tokenType, ${position.line}, ${position.column}, $value>"
-}
+import scala.runtime.ScalaRunTime
+import scala.util.parsing.input.Positional
 
-case class Position(line: Int = 0, column: Int = 0)
+//case class Token(tokenType: TokenType, value: String = "")(implicit val position: Position) {
+//    override def toString: String = s"<$tokenType, ${position.line}, ${position.column}, $value>"
+//}
 
-sealed trait TokenType
+sealed trait PyToken extends Positional
 
-case object SyntaxError extends TokenType
-case object StartOfFile extends TokenType
-case object EndOfFile extends TokenType
-case object Empty extends TokenType
-case object NewLine extends TokenType
-case object Indent extends TokenType
-case object Dedent extends TokenType
+case class SyntaxError(msg: String) extends PyToken
+case class StartOfFile() extends PyToken
+case class EndOfFile() extends PyToken
+case class Empty() extends PyToken
+case class NewLine() extends PyToken
+case class Indent(n: Int) extends PyToken
+case class Dedent() extends PyToken
 
-case object Identifier extends TokenType
+case class Identifier(value: String) extends PyToken
 
-sealed trait Literal extends TokenType
-case object StringLiteral extends Literal
-//case object IdStringLiteral extends Literal
-case object IntegerLiteral extends Literal
-case object FloatPointLiteral extends Literal
+sealed trait Literal extends PyToken
+case class StringLiteral(value: String) extends Literal
+case class IntegerLiteral(value: String) extends Literal
+case class FloatPointLiteral(value: String) extends Literal
 
-sealed trait Operator extends TokenType
+sealed trait Operator extends PyToken
 object Operator {
     /*
      */
     // python makes != and <> the same thing
     val operatorMap: Map[String, Operator] = Map[String, Operator](
         // single op
-        "%" -> PERCENT,
-        "&" -> AMPER,
-        "(" -> LPAR,
-        ")" -> RPAR,
-        "*" -> STAR,
-        "+" -> PLUS,
-        "," -> COMMA,
-        "-" -> MINUS,
-        "." -> DOT,
-        "/" -> SLASH,
-        ":" -> COLON,
-        ";" -> SEMI,
-        "<" -> LESS,
-        "=" -> EQUAL,
-        ">" -> GREATER,
-        "@" -> AT,
-        "[" -> LSQB,
-        "]" -> RSQB,
-        "^" -> CIRCUMFLEX,
-        "{" -> LBRACE,
-        "|" -> VBAR,
-        "}" -> RBRACE,
-        "~" -> TILDE,
+        "%" -> PERCENT(),
+        "&" -> AMPER(),
+        "(" -> LPAR(),
+        ")" -> RPAR(),
+        "*" -> STAR(),
+        "+" -> PLUS(),
+        "," -> COMMA(),
+        "-" -> MINUS(),
+        "." -> DOT(),
+        "/" -> SLASH(),
+        ":" -> COLON(),
+        ";" -> SEMI(),
+        "<" -> LESS(),
+        "=" -> EQUAL(),
+        ">" -> GREATER(),
+        "@" -> AT(),
+        "[" -> LSQB(),
+        "]" -> RSQB(),
+        "^" -> CIRCUMFLEX(),
+        "{" -> LBRACE(),
+        "|" -> VBAR(),
+        "}" -> RBRACE(),
+        "~" -> TILDE(),
 
         // dual op
-        "!=" -> NOTEQUAL,
-        "%=" -> PERCENTEQUAL,
-        "&=" -> AMPEREQUAL,
-        "**" -> DOUBLESTAR,
-        "*=" -> STAREQUAL,
-        "+=" -> PLUSEQUAL,
-        "-=" -> MINEQUAL,
-        "->" -> RARROW,
-        "//" -> DOUBLESLASH,
-        "/=" -> SLASHEQUAL,
-        ":=" -> COLONEQUAL,
-        "<<" -> LEFTSHIFT,
-        "<=" -> LESSEQUAL,
-        "<>" -> NOTEQUAL,
-        "==" -> EQEQUAL,
-        ">=" -> GREATEREQUAL,
-        ">>" -> RIGHTSHIFT,
-        "@=" -> ATEQUAL,
-        "^=" -> CIRCUMFLEXEQUAL,
-        "|=" -> VBAREQUAL,
+        "!=" -> NOTEQUAL(),
+        "%=" -> PERCENTEQUAL(),
+        "&=" -> AMPEREQUAL(),
+        "**" -> DOUBLESTAR(),
+        "*=" -> STAREQUAL(),
+        "+=" -> PLUSEQUAL(),
+        "-=" -> MINEQUAL(),
+        "->" -> RARROW(),
+        "//" -> DOUBLESLASH(),
+        "/=" -> SLASHEQUAL(),
+        ":=" -> COLONEQUAL(),
+        "<<" -> LEFTSHIFT(),
+        "<=" -> LESSEQUAL(),
+        "<>" -> NOTEQUAL(),
+        "==" -> EQEQUAL(),
+        ">=" -> GREATEREQUAL(),
+        ">>" -> RIGHTSHIFT(),
+        "@=" -> ATEQUAL(),
+        "^=" -> CIRCUMFLEXEQUAL(),
+        "|=" -> VBAREQUAL(),
 
         // triple
-        "**=" -> DOUBLESTAREQUAL,
-        "..." -> ELLIPSIS,
-        "//=" -> DOUBLESLASHEQUAL,
-        "<<=" -> LEFTSHIFTEQUAL,
-        ">>=" -> RIGHTSHIFTEQUAL
+        "**=" -> DOUBLESTAREQUAL(),
+        "..." -> ELLIPSIS(),
+        "//=" -> DOUBLESLASHEQUAL(),
+        "<<=" -> LEFTSHIFTEQUAL(),
+        ">>=" -> RIGHTSHIFTEQUAL()
     )
     // single
-    case object PERCENT extends Operator
-    case object AMPER extends Operator
-    case object LPAR extends Operator
-    case object RPAR extends Operator
-    case object STAR extends Operator
-    case object PLUS extends Operator
-    case object COMMA extends Operator
-    case object MINUS extends Operator
-    case object DOT extends Operator
-    case object SLASH extends Operator
-    case object COLON extends Operator
-    case object SEMI extends Operator
-    case object LESS extends Operator
-    case object EQUAL extends Operator
-    case object GREATER extends Operator
-    case object AT extends Operator
-    case object LSQB extends Operator
-    case object RSQB extends Operator
-    case object CIRCUMFLEX extends Operator
-    case object LBRACE extends Operator
-    case object RBRACE extends Operator
-    case object VBAR extends Operator
-    case object TILDE extends Operator
+    case class PERCENT() extends Operator
+    case class AMPER() extends Operator
+    case class LPAR() extends Operator
+    case class RPAR() extends Operator
+    case class STAR() extends Operator
+    case class PLUS() extends Operator
+    case class COMMA() extends Operator
+    case class MINUS() extends Operator
+    case class DOT() extends Operator
+    case class SLASH() extends Operator
+    case class COLON() extends Operator
+    case class SEMI() extends Operator
+    case class LESS() extends Operator
+    case class EQUAL() extends Operator
+    case class GREATER() extends Operator
+    case class AT() extends Operator
+    case class LSQB() extends Operator
+    case class RSQB() extends Operator
+    case class CIRCUMFLEX() extends Operator
+    case class LBRACE() extends Operator
+    case class RBRACE() extends Operator
+    case class VBAR() extends Operator
+    case class TILDE() extends Operator
 
     // duet
-    case object NOTEQUAL extends Operator
-    case object PERCENTEQUAL extends Operator
-    case object AMPEREQUAL extends Operator
-    case object DOUBLESTAR extends Operator
-    case object STAREQUAL extends Operator
-    case object PLUSEQUAL extends Operator
-    case object MINEQUAL extends Operator
-    case object RARROW extends Operator
-    case object DOUBLESLASH extends Operator
-    case object SLASHEQUAL extends Operator
-    case object COLONEQUAL extends Operator
-    case object LEFTSHIFT extends Operator
-    case object LESSEQUAL extends Operator
-    case object EQEQUAL extends Operator
-    case object GREATEREQUAL extends Operator
-    case object RIGHTSHIFT extends Operator
-    case object ATEQUAL extends Operator
-    case object CIRCUMFLEXEQUAL extends Operator
-    case object VBAREQUAL extends Operator
+    case class NOTEQUAL() extends Operator
+    case class PERCENTEQUAL() extends Operator
+    case class AMPEREQUAL() extends Operator
+    case class DOUBLESTAR() extends Operator
+    case class STAREQUAL() extends Operator
+    case class PLUSEQUAL() extends Operator
+    case class MINEQUAL() extends Operator
+    case class RARROW() extends Operator
+    case class DOUBLESLASH() extends Operator
+    case class SLASHEQUAL() extends Operator
+    case class COLONEQUAL() extends Operator
+    case class LEFTSHIFT() extends Operator
+    case class LESSEQUAL() extends Operator
+    case class EQEQUAL() extends Operator
+    case class GREATEREQUAL() extends Operator
+    case class RIGHTSHIFT() extends Operator
+    case class ATEQUAL() extends Operator
+    case class CIRCUMFLEXEQUAL() extends Operator
+    case class VBAREQUAL() extends Operator
 
     // triplet
-    case object DOUBLESTAREQUAL extends Operator
-    case object ELLIPSIS extends Operator
-    case object DOUBLESLASHEQUAL extends Operator
-    case object LEFTSHIFTEQUAL extends Operator
-    case object RIGHTSHIFTEQUAL extends Operator
+    case class DOUBLESTAREQUAL() extends Operator
+    case class ELLIPSIS() extends Operator
+    case class DOUBLESLASHEQUAL() extends Operator
+    case class LEFTSHIFTEQUAL() extends Operator
+    case class RIGHTSHIFTEQUAL() extends Operator
 }
 
-sealed trait Keyword extends TokenType
+sealed trait Keyword extends PyToken
 object Keyword {
     val keywords: Map[String, Keyword] = Map[String, Keyword](
-        "False" -> FALSE,
-        "None" -> NONE,
-        "True" -> TRUE,
-        "and" -> AND,
-        "as" -> AS,
-        "assert" -> ASSERT,
-        "async" -> ASYNC,
-        "await" -> AWAIT,
-        "break" -> BREAK,
-        "class" -> CLASS,
-        "continue" -> CONTINUE,
-        "def" -> DEF,
-        "del" -> DEL,
-        "elif" -> ELIF,
-        "else" -> ELSE,
-        "except" -> EXCEPT,
-        "finally" -> FINALLY,
-        "for" -> FOR,
-        "from" -> FROM,
-        "global" -> GLOBAL,
-        "if" -> IF,
-        "import" -> IMPORT,
-        "in" -> IN,
-        "is" -> IS,
-        "lambda" -> LAMBDA,
-        "nonlocal" -> NONLOCAL,
-        "not" -> NOT,
-        "or" -> OR,
-        "pass" -> PASS,
-        "raise" -> RAISE,
-        "return" -> RETURN,
-        "try" -> TRY,
-        "while" -> WHILE,
-        "with" -> WITH,
-        "yield" -> YIELD
+        "False" -> FALSE(),
+        "None" -> NONE(),
+        "True" -> TRUE(),
+        "and" -> AND(),
+        "as" -> AS(),
+        "assert" -> ASSERT(),
+        "async" -> ASYNC(),
+        "await" -> AWAIT(),
+        "break" -> BREAK(),
+        "class" -> CLASS(),
+        "continue" -> CONTINUE(),
+        "def" -> DEF(),
+        "del" -> DEL(),
+        "elif" -> ELIF(),
+        "else" -> ELSE(),
+        "except" -> EXCEPT(),
+        "finally" -> FINALLY(),
+        "for" -> FOR(),
+        "from" -> FROM(),
+        "global" -> GLOBAL(),
+        "if" -> IF(),
+        "import" -> IMPORT(),
+        "in" -> IN(),
+        "is" -> IS(),
+        "lambda" -> LAMBDA(),
+        "nonlocal" -> NONLOCAL(),
+        "not" -> NOT(),
+        "or" -> OR(),
+        "pass" -> PASS(),
+        "raise" -> RAISE(),
+        "return" -> RETURN(),
+        "try" -> TRY(),
+        "while" -> WHILE(),
+        "with" -> WITH(),
+        "yield" -> YIELD()
     )
 
-    case object FALSE extends Keyword
-    case object NONE extends Keyword
-    case object TRUE extends Keyword
-    case object AND extends Keyword
-    case object AS extends Keyword
-    case object ASSERT extends Keyword
-    case object ASYNC extends Keyword
-    case object AWAIT extends Keyword
-    case object BREAK extends Keyword
-    case object CLASS extends Keyword
-    case object CONTINUE extends Keyword
-    case object DEF extends Keyword
-    case object DEL extends Keyword
-    case object ELIF extends Keyword
-    case object ELSE extends Keyword
-    case object EXCEPT extends Keyword
-    case object FINALLY extends Keyword
-    case object FOR extends Keyword
-    case object FROM extends Keyword
-    case object GLOBAL extends Keyword
-    case object IF extends Keyword
-    case object IMPORT extends Keyword
-    case object IN extends Keyword
-    case object IS extends Keyword
-    case object LAMBDA extends Keyword
-    case object NONLOCAL extends Keyword
-    case object NOT extends Keyword
-    case object OR extends Keyword
-    case object PASS extends Keyword
-    case object RAISE extends Keyword
-    case object RETURN extends Keyword
-    case object TRY extends Keyword
-    case object WHILE extends Keyword
-    case object WITH extends Keyword
-    case object YIELD extends Keyword
+    case class FALSE() extends Keyword
+    case class NONE() extends Keyword
+    case class TRUE() extends Keyword
+    case class AND() extends Keyword
+    case class AS() extends Keyword
+    case class ASSERT() extends Keyword
+    case class ASYNC() extends Keyword
+    case class AWAIT() extends Keyword
+    case class BREAK() extends Keyword
+    case class CLASS() extends Keyword
+    case class CONTINUE() extends Keyword
+    case class DEF() extends Keyword
+    case class DEL() extends Keyword
+    case class ELIF() extends Keyword
+    case class ELSE() extends Keyword
+    case class EXCEPT() extends Keyword
+    case class FINALLY() extends Keyword
+    case class FOR() extends Keyword
+    case class FROM() extends Keyword
+    case class GLOBAL() extends Keyword
+    case class IF() extends Keyword
+    case class IMPORT() extends Keyword
+    case class IN() extends Keyword
+    case class IS() extends Keyword
+    case class LAMBDA() extends Keyword
+    case class NONLOCAL() extends Keyword
+    case class NOT() extends Keyword
+    case class OR() extends Keyword
+    case class PASS() extends Keyword
+    case class RAISE() extends Keyword
+    case class RETURN() extends Keyword
+    case class TRY() extends Keyword
+    case class WHILE() extends Keyword
+    case class WITH() extends Keyword
+    case class YIELD() extends Keyword
 }
