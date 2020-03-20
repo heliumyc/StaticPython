@@ -1,9 +1,6 @@
 package lexer
 
-import scala.runtime.ScalaRunTime
-import scala.util.parsing.input.Positional
-
-sealed trait PyToken extends Positional
+sealed trait PyToken extends MyPositional
 
 case class SyntaxError(msg: String) extends PyToken
 case class StartOfFile() extends PyToken

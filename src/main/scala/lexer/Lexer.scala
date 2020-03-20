@@ -82,8 +82,8 @@ class Lexer(input: Reader) {
         }
 
         lexeme.clear()
+        curPosition = PyPosition(line, ptr+1) // currently ptr points to the \n
         if (isEndOfLine) {
-            curPosition = PyPosition(line, ptr+1) // currently ptr points to the \n
             nextLine match {
                 case Some(lineString) =>
                     bufferLine = lineString
@@ -92,7 +92,7 @@ class Lexer(input: Reader) {
                     return NewLine()
                 case None =>
                     if (indentStack.head > 0) {
-                        (1 to Util.removeFrontUntil[Int](indentStack, _==0)).map(_=>{Dedent() +=: tokenBuffer})
+                        (1 to Util.removeFrontUntil[Int](indentStack, _==0)).map(_=>{Dedent().setPos(curPosition) +=: tokenBuffer})
                         return NewLine()
                     } else {
                         isEof = true
