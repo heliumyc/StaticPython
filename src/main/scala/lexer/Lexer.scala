@@ -171,7 +171,7 @@ class Lexer(input: Reader) {
             Some(Indent(indent))
         } else if (indentStack.head > indent) {
             if (indentStack.contains(indent)) {
-                (1 to Util.removeFrontUntil[Int](indentStack, _==indent)).map(_=>{Dedent() +=: tokenBuffer})
+                (1 to Util.removeFrontUntil[Int](indentStack, _==indent)).map(_=>{Dedent().setPos(curPosition) +=: tokenBuffer})
                 // assert token buffer must has at least one, guaranteed by last if statement
                 Some(tokenBuffer.remove(0))
             } else {
