@@ -20,7 +20,6 @@ class Lexer(input: Reader) {
     private val blockMap = Map('(' -> ')', '[' -> ']', '{' -> '}')
     private var isEof = false
     private var curPosition: PyPosition = PyPosition(0, 0)
-//    StartOfFile().setPos(curPosition) +=: tokenBuffer // add start token
 
     private def nextLine: Option[String] = Option(reader.readLine())
 
@@ -59,16 +58,6 @@ class Lexer(input: Reader) {
 
     def hasNextToken: Boolean = !isEof
 
-    def peekToken(k: Int = 1): Option[PyToken] = {
-        while (hasNextToken && tokenBuffer.size < k) {
-            tokenBuffer.addOne(_getToken)
-        }
-        if (tokenBuffer.size >= k)
-            Some(tokenBuffer(k))
-        else
-            None
-    }
-
     def getToken: PyToken = {
         if (tokenBuffer.isEmpty)
             _getToken.setPos(curPosition) +=: tokenBuffer
@@ -87,9 +76,9 @@ class Lexer(input: Reader) {
             nextLine match {
                 case Some(lineString) =>
                     bufferLine = lineString
-                    ptr = 0
                     line += 1
-                    return NewLine()
+                    ptr = 0
+                    if(nextLine != 1) NewLine()
                 case None =>
                     if (indentStack.head > 0) {
                         (1 to Util.removeFrontUntil[Int](indentStack, _==0)).map(_=>{Dedent().setPos(curPosition) +=: tokenBuffer})
