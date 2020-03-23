@@ -21,6 +21,7 @@ class Lexer(input: Reader) {
     private var isEof = false
     private var curPosition: PyPosition = PyPosition(0, 0)
 
+    @inline
     private def nextLine: Option[String] = Option(reader.readLine())
 
     private def nextChar: Option[Char] = {
@@ -56,11 +57,17 @@ class Lexer(input: Reader) {
         }
     }
 
-    def hasNextToken: Boolean = !isEof
+    @inline
+    private def pushToBuffer(x:PyToken): Unit = tokenBuffer.addOne(x.setPos(curPosition))
+
+    @inline
+    private def popDedent(): Unit = (1 to Util.removeFrontUntil[Int](indentStack, _==0)).foreach(_=>{pushToBuffer(Dedent())})
+
+    def hasNextToken: Boolean = !isEof || tokenBuffer.nonEmpty
 
     def getToken: PyToken = {
         if (tokenBuffer.isEmpty)
-            _getToken.setPos(curPosition) +=: tokenBuffer
+            pushToBuffer(_getToken)
         tokenBuffer.remove(0)
     }
 
@@ -78,13 +85,14 @@ class Lexer(input: Reader) {
                     bufferLine = lineString
                     line += 1
                     ptr = 0
-                    if(nextLine != 1) NewLine()
+                    if(line != 1) return NewLine()
                 case None =>
                     if (indentStack.head > 0) {
-                        (1 to Util.removeFrontUntil[Int](indentStack, _==0)).map(_=>{Dedent().setPos(curPosition) +=: tokenBuffer})
+                        popDedent()
                         return NewLine()
                     } else {
                         isEof = true
+                        pushToBuffer(NewLine())
                         return EndOfFile()
                     }
             }
@@ -160,7 +168,7 @@ class Lexer(input: Reader) {
             Some(Indent(indent))
         } else if (indentStack.head > indent) {
             if (indentStack.contains(indent)) {
-                (1 to Util.removeFrontUntil[Int](indentStack, _==indent)).map(_=>{Dedent().setPos(curPosition) +=: tokenBuffer})
+                popDedent()
                 // assert token buffer must has at least one, guaranteed by last if statement
                 Some(tokenBuffer.remove(0))
             } else {
