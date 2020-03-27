@@ -12,10 +12,10 @@ case class Dedent() extends PyToken
 
 case class Identifier(value: String) extends PyToken
 
-sealed trait Literal extends PyToken
-case class StringLiteral(value: String) extends Literal
-case class IntegerLiteral(value: String) extends Literal
-case class FloatPointLiteral(value: String) extends Literal
+sealed trait LiteralToken extends PyToken
+case class StringLiteralToken(value: String) extends LiteralToken
+case class IntegerLiteralToken(value: String) extends LiteralToken
+case class FloatPointLiteralToken(value: String) extends LiteralToken
 
 sealed trait Operator extends PyToken
 object Operator {

@@ -233,17 +233,17 @@ class Lexer(input: Reader) {
                     }
             }
         } while (!endOfString)
-        StringLiteral(lexeme.toString())
+        StringLiteralToken(lexeme.toString())
     }
 
     private def getNumber: PyToken = {
         numberParser.parse(bufferLine.substring(ptr)) match {
             case (v, 1) =>
                 consumeNextKChar(v.length)
-                IntegerLiteral(v)
+                IntegerLiteralToken(v)
             case (v, 2) =>
                 consumeNextKChar(v.length)
-                FloatPointLiteral(v)
+                FloatPointLiteralToken(v)
             case _ => SyntaxError( "Invalid number")
         }
     }
