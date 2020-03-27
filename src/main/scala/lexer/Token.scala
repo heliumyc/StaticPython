@@ -10,7 +10,7 @@ case class NewLine() extends PyToken
 case class Indent(n: Int) extends PyToken
 case class Dedent() extends PyToken
 
-case class Identifier(value: String) extends PyToken
+case class IdentifierToken(value: String) extends PyToken
 
 sealed trait LiteralToken extends PyToken
 case class StringLiteralToken(value: String) extends LiteralToken

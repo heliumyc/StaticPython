@@ -188,7 +188,7 @@ class Lexer(input: Reader) {
                 getIdentifierOrKeyword
             case _ =>
                 if (Keyword.keywords.contains(lexeme.toString())) Keyword.keywords(lexeme.toString())()
-                else Identifier(lexeme.toString())
+                else IdentifierToken(lexeme.toString())
         }
     }
 
