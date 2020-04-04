@@ -134,7 +134,7 @@ class Lexer(input: Reader) {
                 } else if (c == '.' && peekNextChar(2).isDefined && peekNextChar(2).get.isDigit) {
                     // special case, . can be the prefix of a number, fuck it
                     getNumber
-                } else if (Operator.operatorMap.contains(c.toString)) {
+                } else if (OperatorToken.operatorMap.contains(c.toString)) {
                     // possible operator
                     if (blockMap.contains(c)) {
                         blockStack ::= c
@@ -202,9 +202,9 @@ class Lexer(input: Reader) {
             lookaheadChars(opLength) match {
                 case None => getOperator(opLength-1)
                 case Some(next) =>
-                    if (Operator.operatorMap.contains(next)){
+                    if (OperatorToken.operatorMap.contains(next)){
                         consumeNextKChar(opLength)
-                        Operator.operatorMap(next)()
+                        OperatorToken.operatorMap(next)()
                     } else {
                         // fail on this length, backtrace
                         getOperator(opLength-1)

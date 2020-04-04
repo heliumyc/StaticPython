@@ -17,8 +17,8 @@ case class StringLiteralToken(value: String) extends LiteralToken
 case class IntegerLiteralToken(value: String) extends LiteralToken
 case class FloatPointLiteralToken(value: String) extends LiteralToken
 
-sealed trait Operator extends PyToken
-object Operator {
+sealed trait OperatorToken extends PyToken
+object OperatorToken {
     /*
      */
     // python makes != and <> the same thing
@@ -80,57 +80,57 @@ object Operator {
 }
 
 // single
-case class PERCENT() extends Operator
-case class AMPER() extends Operator
-case class LPAR() extends Operator
-case class RPAR() extends Operator
-case class STAR() extends Operator
-case class PLUS() extends Operator
-case class COMMA() extends Operator
-case class MINUS() extends Operator
-case class DOT() extends Operator
-case class SLASH() extends Operator
-case class COLON() extends Operator
-case class SEMI() extends Operator
-case class LESS() extends Operator
-case class EQUAL() extends Operator
-case class GREATER() extends Operator
-case class AT() extends Operator
-case class LSQB() extends Operator
-case class RSQB() extends Operator
-case class CIRCUMFLEX() extends Operator
-case class LBRACE() extends Operator
-case class RBRACE() extends Operator
-case class VBAR() extends Operator
-case class TILDE() extends Operator
+case class PERCENT() extends OperatorToken
+case class AMPER() extends OperatorToken
+case class LPAR() extends OperatorToken
+case class RPAR() extends OperatorToken
+case class STAR() extends OperatorToken
+case class PLUS() extends OperatorToken
+case class COMMA() extends OperatorToken
+case class MINUS() extends OperatorToken
+case class DOT() extends OperatorToken
+case class SLASH() extends OperatorToken
+case class COLON() extends OperatorToken
+case class SEMI() extends OperatorToken
+case class LESS() extends OperatorToken
+case class EQUAL() extends OperatorToken
+case class GREATER() extends OperatorToken
+case class AT() extends OperatorToken
+case class LSQB() extends OperatorToken
+case class RSQB() extends OperatorToken
+case class CIRCUMFLEX() extends OperatorToken
+case class LBRACE() extends OperatorToken
+case class RBRACE() extends OperatorToken
+case class VBAR() extends OperatorToken
+case class TILDE() extends OperatorToken
 
 // duet
-case class NOTEQUAL() extends Operator
-case class PERCENTEQUAL() extends Operator
-case class AMPEREQUAL() extends Operator
-case class DOUBLESTAR() extends Operator
-case class STAREQUAL() extends Operator
-case class PLUSEQUAL() extends Operator
-case class MINEQUAL() extends Operator
-case class RARROW() extends Operator
-case class DOUBLESLASH() extends Operator
-case class SLASHEQUAL() extends Operator
-case class COLONEQUAL() extends Operator
-case class LEFTSHIFT() extends Operator
-case class LESSEQUAL() extends Operator
-case class EQEQUAL() extends Operator
-case class GREATEREQUAL() extends Operator
-case class RIGHTSHIFT() extends Operator
-case class ATEQUAL() extends Operator
-case class CIRCUMFLEXEQUAL() extends Operator
-case class VBAREQUAL() extends Operator
+case class NOTEQUAL() extends OperatorToken
+case class PERCENTEQUAL() extends OperatorToken
+case class AMPEREQUAL() extends OperatorToken
+case class DOUBLESTAR() extends OperatorToken
+case class STAREQUAL() extends OperatorToken
+case class PLUSEQUAL() extends OperatorToken
+case class MINEQUAL() extends OperatorToken
+case class RARROW() extends OperatorToken
+case class DOUBLESLASH() extends OperatorToken
+case class SLASHEQUAL() extends OperatorToken
+case class COLONEQUAL() extends OperatorToken
+case class LEFTSHIFT() extends OperatorToken
+case class LESSEQUAL() extends OperatorToken
+case class EQEQUAL() extends OperatorToken
+case class GREATEREQUAL() extends OperatorToken
+case class RIGHTSHIFT() extends OperatorToken
+case class ATEQUAL() extends OperatorToken
+case class CIRCUMFLEXEQUAL() extends OperatorToken
+case class VBAREQUAL() extends OperatorToken
 
 // triplet
-case class DOUBLESTAREQUAL() extends Operator
-case class ELLIPSIS() extends Operator
-case class DOUBLESLASHEQUAL() extends Operator
-case class LEFTSHIFTEQUAL() extends Operator
-case class RIGHTSHIFTEQUAL() extends Operator
+case class DOUBLESTAREQUAL() extends OperatorToken
+case class ELLIPSIS() extends OperatorToken
+case class DOUBLESLASHEQUAL() extends OperatorToken
+case class LEFTSHIFTEQUAL() extends OperatorToken
+case class RIGHTSHIFTEQUAL() extends OperatorToken
 
 sealed trait Keyword extends PyToken
 object Keyword {
