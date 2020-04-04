@@ -7,7 +7,6 @@ import astnodes.operators._
 import astnodes.types._
 import astnodes._
 import lexer._
-
 import scala.reflect.{ClassTag, classTag}
 
 /*
@@ -393,8 +392,24 @@ class PyParser(val lexer: Lexer) {
                 case LPAR() => tupleExpr()
                 case LSQB() => listExpr()
                 case IdentifierToken(id) => reader.consume(); Right(Identifier(id).setPos(tok.pos))
-                case FloatPointLiteralToken(float) => reader.consume(); Right(FloatLiteral(float.toDouble).setPos(tok.pos))
-                case IntegerLiteralToken(int) => reader.consume(); Right(IntegerLiteral(int.toInt).setPos(tok.pos))
+                case FloatPointLiteralToken(float) =>
+                    reader.consume()
+                    float.toDoubleOption match {
+                        case Some(v) => Right(FloatLiteral(v).setPos(tok.pos))
+                        case None =>
+                            // parse error recovery
+                            parseErrors = PyParseError("Invalid float point number", tok.pos) :: parseErrors
+                            Right(FloatLiteral(0).setPos(tok.pos))
+                    }
+                case IntegerLiteralToken(int) =>
+                    reader.consume()
+                    int.toIntOption match {
+                        case Some(v) => Right(IntegerLiteral(v).setPos(tok.pos))
+                        case None =>
+                            // parse error recovery
+                            parseErrors = PyParseError("Invalid integer number", tok.pos) :: parseErrors
+                            Right(IntegerLiteral(0).setPos(tok.pos))
+                    }
                 case StringLiteralToken(str) => reader.consume(); Right(StringLiteral(str).setPos(tok.pos));
                 case NONE() => reader.consume(); Right(NoneLiteral().setPos(tok.pos))
                 case TRUE() => reader.consume(); Right(BoolLiteral(true).setPos(tok.pos))
@@ -446,9 +461,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def argsList(): Either[PyParseError, List[Expression]] = {
-        testList()
-    }
+    def argsList(): Either[PyParseError, List[Expression]] = testList()
 
     def exprList(): Either[PyParseError, List[Expression]] = {
         expr() match {
