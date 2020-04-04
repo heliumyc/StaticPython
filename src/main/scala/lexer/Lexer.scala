@@ -61,7 +61,7 @@ class Lexer(input: Reader) {
     private def pushToBuffer(x:PyToken): Unit = tokenBuffer.addOne(x.setPos(curPosition))
 
     @inline
-    private def popDedent(): Unit = (1 to Util.removeFrontUntil[Int](indentStack, _==0)).foreach(_=>{pushToBuffer(Dedent())})
+    private def popDedent(indent:Int): Unit = (1 to Util.removeFrontUntil[Int](indentStack, _==indent)).foreach(_=>{pushToBuffer(Dedent())})
 
     def hasNextToken: Boolean = !isEof || tokenBuffer.nonEmpty
 
@@ -88,7 +88,7 @@ class Lexer(input: Reader) {
                     if(line != 1) return NewLine()
                 case None =>
                     if (indentStack.head > 0) {
-                        popDedent()
+                        popDedent(0)
                         return NewLine()
                     } else {
                         isEof = true
@@ -104,7 +104,8 @@ class Lexer(input: Reader) {
                 case x if x >= 0 =>
                     // x >= 0 means there must be one char nonempty
                     ptr = x
-                    if (peekNextChar().isDefined && peekNextChar().get != '#') {
+//                    assert(peekNextChar().isDefined)
+                    if (peekNextChar().get != '#') {
                         checkStackAndReturn(x) match {
                             case None  => // no space no indent do nothing
                             case Some(t) => return t
@@ -168,8 +169,8 @@ class Lexer(input: Reader) {
             Some(Indent(indent))
         } else if (indentStack.head > indent) {
             if (indentStack.contains(indent)) {
-                popDedent()
-                // assert token buffer must has at least one, guaranteed by last if statement
+                popDedent(indent)
+                // assert token buffer must has at least one
                 Some(tokenBuffer.remove(0))
             } else {
                 Some(SyntaxError("Indentation Error"))
