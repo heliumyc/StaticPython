@@ -1,5 +1,5 @@
 import junit.framework.TestCase
-import lexer.{FloatPointLiteral, IntegerLiteral, NumberParser, Empty}
+import lexer.{FloatPointLiteralToken, IntegerLiteralToken, NumberParser, Empty}
 import org.junit.Assert._
 
 class NumberParserTest extends TestCase {
