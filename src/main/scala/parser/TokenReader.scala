@@ -2,7 +2,6 @@ package parser
 
 import common.PyToken
 import lexer.Lexer
-
 import scala.collection.mutable
 
 class TokenReader(val lexer: Lexer) {
@@ -27,11 +26,4 @@ class TokenReader(val lexer: Lexer) {
         }
     }
 
-//    def drop(): Unit = {
-//        buffer = Nil
-//    }
-//
-//    def revert(): Unit = {
-//        toReadQueue = buffer ::: toReadQueue
-//    }
 }

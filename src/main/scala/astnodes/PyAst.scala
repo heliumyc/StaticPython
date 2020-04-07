@@ -1,7 +1,5 @@
 package astnodes
 
-import java.lang.reflect.Member
-
 import analysis.NodeAnalyzer
 import astnodes.declarations.{ClassDef, FuncDef, VarDef}
 import astnodes.expressions.{AssignExpr, BinaryExpr, CallExpr, Identifier, IfExpr, IndexExpr, ListExpr, MemberExpr, TupleExpr, UnaryExpr}

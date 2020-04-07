@@ -8,7 +8,6 @@ import astnodes.types._
 import astnodes._
 import common.{AND, BREAK, CLASS, COLON, COMMA, CONTINUE, DEF, DEL, DOT, DOUBLESLASH, DOUBLESTAR, Dedent, ELIF, ELSE, EQUAL, EndOfFile, Error, FALSE, FOR, FloatPointLiteralToken, GREATER, GREATEREQUAL, IF, IMPORT, IN, IS, IdentifierToken, Indent, IntegerLiteralToken, LESS, LESSEQUAL, LPAR, LSQB, MINUS, NONE, NOT, NOTEQUAL, NewLine, NoPosition, OR, PASS, PERCENT, PLUS, Position, PyToken, RARROW, RETURN, RPAR, RSQB, SLASH, STAR, StringLiteralToken, TRUE, WHILE}
 import lexer._
-
 import scala.reflect.{ClassTag, classTag}
 
 /*
