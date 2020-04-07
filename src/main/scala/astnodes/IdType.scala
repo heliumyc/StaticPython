@@ -1,7 +1,7 @@
 package astnodes
 
-import lexer.IdentifierToken
 import astnodes.types.PyType
+import common.IdentifierToken
 
 case class IdType(typeName: IdentifierToken) extends PyType {
 

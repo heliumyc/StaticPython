@@ -1,6 +1,6 @@
 package astnodes
 
-import lexer.IdentifierToken
+import common.IdentifierToken
 
 case class DelStmt(identifier: IdentifierToken) extends Statement {
 

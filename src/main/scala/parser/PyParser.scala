@@ -6,7 +6,9 @@ import astnodes.literals._
 import astnodes.operators._
 import astnodes.types._
 import astnodes._
+import common.{AND, BREAK, CLASS, COLON, COMMA, CONTINUE, DEF, DEL, DOT, DOUBLESLASH, DOUBLESTAR, Dedent, ELIF, ELSE, EQUAL, EndOfFile, Error, FALSE, FOR, FloatPointLiteralToken, GREATER, GREATEREQUAL, IF, IMPORT, IN, IS, IdentifierToken, Indent, IntegerLiteralToken, LESS, LESSEQUAL, LPAR, LSQB, MINUS, NONE, NOT, NOTEQUAL, NewLine, NoPosition, OR, PASS, PERCENT, PLUS, Position, PyToken, RARROW, RETURN, RPAR, RSQB, SLASH, STAR, StringLiteralToken, TRUE, WHILE}
 import lexer._
+
 import scala.reflect.{ClassTag, classTag}
 
 /*
@@ -14,23 +16,23 @@ import scala.reflect.{ClassTag, classTag}
     hand written parser is evil, awful, dirty, meaningless and purely waste of time
  */
 class PyParser(val lexer: Lexer) {
-    var parseErrors: List[PyParseError] = List[PyParseError]()
+    var parseErrors: List[common.Error] = List[common.Error]()
     val compTokToCompOp: Map[PyToken, BinaryOp] = Map(GREATER() -> Greater(), LESS() -> Less(), GREATEREQUAL() -> GreaterEq(),
         LESSEQUAL() -> LessEq(), EQUAL() -> Equal(), IN() -> In(), IS() -> Is())
     val reader = new TokenReader(lexer)
 
-    private def accept[T <: PyToken : ClassTag](): Either[PyParseError, T] = {
+    private def accept[T <: PyToken : ClassTag](): Either[common.Error, T] = {
         reader.peek() match {
             case Some(x: T) =>
                 reader.consume()
                 Right(x)
-            case Some(other) => Left(PyParseError(s"Expect ${classTag[T].runtimeClass.getSimpleName} but found $other at ${other.pos}", other.pos))
-            case None => Left(PyParseError(s"End of file is reached", NoPosition))
+            case Some(other) => Left(Error(s"Expect ${classTag[T].runtimeClass.getSimpleName} but found $other at ${other.pos}", other.pos))
+            case None => Left(common.Error(s"End of file is reached", NoPosition))
         }
     }
 
     @scala.annotation.tailrec
-    private def repeat[T, U](isInFirstSet: PyToken => Boolean, parserFunc: () => Either[PyParseError, T], combineOp: (T, U) => U, applyOp: U => U, acc: U): Either[PyParseError, U] = {
+    private def repeat[T, U](isInFirstSet: PyToken => Boolean, parserFunc: () => Either[Error, T], combineOp: (T, U) => U, applyOp: U => U, acc: U): Either[Error, U] = {
         if (reader.nonEmpty() && isInFirstSet(reader.peek().get)) {
             parserFunc() match {
                 case Right(value) =>
@@ -42,7 +44,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    private def optional[T](isInFirstSet: PyToken => Boolean, parserFunc: () => Either[PyParseError, T], defaultVal: T): Either[PyParseError, T] = {
+    private def optional[T](isInFirstSet: PyToken => Boolean, parserFunc: () => Either[Error, T], defaultVal: T): Either[Error, T] = {
         if (reader.nonEmpty() && isInFirstSet(reader.peek().get)) {
             parserFunc()
         } else {
@@ -50,7 +52,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    private def errorRecover(syncToken: PyToken, err: PyParseError): Unit = {
+    private def errorRecover(syncToken: PyToken, err: Error): Unit = {
         parseErrors = err :: parseErrors
         while (reader.nonEmpty() && reader.peek().get != syncToken) {
             reader.consume()
@@ -58,7 +60,7 @@ class PyParser(val lexer: Lexer) {
     }
 
     @inline
-    private def eofError(expectTokName: String) = Left(PyParseError(s"Expect a $expectTokName but found EOF ", NoPosition))
+    private def eofError(expectTokName: String) = Left(common.Error(s"Expect a $expectTokName but found EOF ", NoPosition))
 
     /*
         parse will return the root node of the ast
@@ -78,7 +80,7 @@ class PyParser(val lexer: Lexer) {
         Program(statementList.reverse, parseErrors.reverse)
     }
 
-    def statement(): Either[PyParseError, Statement] = {
+    def statement(): Either[Error, Statement] = {
         if (reader.nonEmpty()) {
             reader.peek().get match {
                 case IF() => ifStmt()
@@ -93,8 +95,8 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def simpleStmt(): Either[PyParseError, Statement] = {
-        val stmt: Either[PyParseError, Statement] = reader.peek().get match {
+    def simpleStmt(): Either[Error, Statement] = {
+        val stmt: Either[Error, Statement] = reader.peek().get match {
             case IdentifierToken(_) =>
                 // var_def or expr_stmt, here we need to lookahead two for val_decl and assign
                 reader.peek(2) match {
@@ -107,7 +109,7 @@ class PyParser(val lexer: Lexer) {
             case BREAK() => breakStmt()
             case CONTINUE() => continueStmt()
             case RETURN() => returnStmt()
-            case tok@_ => Left(PyParseError(s"Expect a statement start but found $tok", tok.pos))
+            case tok@_ => Left(common.Error(s"Expect a statement start but found $tok", tok.pos))
         }
 
         stmt match {
@@ -118,7 +120,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def varDef(): Either[PyParseError, VarDef] = {
+    def varDef(): Either[Error, VarDef] = {
         typedVarDef() match {
             case Left(err) => Left(err)
             case Right(typedVar) =>
@@ -133,7 +135,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def typedVarDef(): Either[PyParseError, TypedVar] = {
+    def typedVarDef(): Either[Error, TypedVar] = {
         for {
             identifier <- accept[IdentifierToken]()
             _ <- accept[COLON]()
@@ -141,7 +143,7 @@ class PyParser(val lexer: Lexer) {
         } yield TypedVar(identifier, typeName).setPos(identifier.pos)
     }
 
-    def varType(): Either[PyParseError, PyType] = {
+    def varType(): Either[Error, PyType] = {
         // cannot be tail recursive, possible performance pitfall
         if (reader.nonEmpty()) {
             reader.peek().get match {
@@ -154,14 +156,14 @@ class PyParser(val lexer: Lexer) {
                 case id@IdentifierToken(_) =>
                     reader.consume()
                     Right(IdType(id).setPos(id.pos))
-                case tok@_ => Left(PyParseError(s"Expect an identifier or list of identifier but found $tok", tok.pos))
+                case tok@_ => Left(common.Error(s"Expect an identifier or list of identifier but found $tok", tok.pos))
             }
         } else {
             eofError("identifier or list of identifier")
         }
     }
 
-    def exprStmt(): Either[PyParseError, Expression] = {
+    def exprStmt(): Either[Error, Expression] = {
         val leftHandSide = atomExpr() match {
             case Right(v) => v
             case Left(err) => return Left(err)
@@ -177,7 +179,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def test(): Either[PyParseError, Expression] = {
+    def test(): Either[Error, Expression] = {
         orTest() match {
             case Left(err) => Left(err)
             case Right(e) =>
@@ -192,7 +194,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def orTest(): Either[PyParseError, Expression] = {
+    def orTest(): Either[Error, Expression] = {
         andTest() match {
             case Left(err) => Left(err)
             case Right(init) => repeat(_==OR(), () => {
@@ -204,7 +206,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def andTest(): Either[PyParseError, Expression] = {
+    def andTest(): Either[Error, Expression] = {
         notTest() match {
             case Left(err) => Left(err)
             case Right(init) => repeat(_==AND(), () => {
@@ -216,7 +218,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def notTest(): Either[PyParseError, Expression] = {
+    def notTest(): Either[Error, Expression] = {
         reader.peek() match {
             case Some(NOT()) =>
                 for {
@@ -227,7 +229,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def comparison(): Either[PyParseError, Expression] = {
+    def comparison(): Either[Error, Expression] = {
         var leftExpr: Expression = null
         expr() match {
             case Left(err) => return Left(err)
@@ -280,14 +282,14 @@ class PyParser(val lexer: Lexer) {
         BinaryExpr(pair._1, acc, pair._2).setPos(pair._2.pos)
     }
 
-    def expr(): Either[PyParseError, Expression] = {
+    def expr(): Either[Error, Expression] = {
         term() match {
             case Left(err) => Left(err)
             case Right(init) => repeat({ case PLUS() | MINUS() => true; case _ => false }, () => {
                 val someOp = reader.consume().get match {
                     case PLUS() => Right(Plus())
                     case MINUS() => Right(Minus())
-                    case tok@_ => Left(PyParseError("Fatal error", tok.pos))
+                    case tok@_ => Left(common.Error("Fatal error", tok.pos))
                 }
                 for {
                     op <- someOp
@@ -297,7 +299,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def term(): Either[PyParseError, Expression] = {
+    def term(): Either[Error, Expression] = {
         factor() match {
             case Left(err) => Left(err)
             case Right(init) => repeat({ case STAR() | SLASH() | PERCENT() | DOUBLESLASH() => true; case _ => false }, () => {
@@ -306,7 +308,7 @@ class PyParser(val lexer: Lexer) {
                     case SLASH() => Right(Divide())
                     case PERCENT() => Right(Modular())
                     case DOUBLESLASH() => Right(FloorDiv())
-                    case tok@_ => Left(PyParseError("Fatal error", tok.pos))
+                    case tok@_ => Left(common.Error("Fatal error", tok.pos))
                 }
                 for {
                     op <- someOp
@@ -316,7 +318,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def factor(): Either[PyParseError, Expression] = {
+    def factor(): Either[Error, Expression] = {
         reader.peek() match {
             case Some(PLUS()) =>
                 for {
@@ -335,7 +337,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def power(): Either[PyParseError, Expression] = {
+    def power(): Either[Error, Expression] = {
         atomExpr() match {
             case Left(err) => Left(err)
             case Right(init) =>
@@ -348,7 +350,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def atomExpr(): Either[PyParseError, Expression] = {
+    def atomExpr(): Either[Error, Expression] = {
         atom() match {
             case Right(initVal) =>
                 repeat({ case LPAR() | LSQB() | DOT() => true; case _ => false }, trailer, (e: AtomExpression, acc: Expression) => {
@@ -363,15 +365,15 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def atom(): Either[PyParseError, Expression] = {
-        def tupleExpr(): Either[PyParseError, TupleExpr] = {
+    def atom(): Either[Error, Expression] = {
+        def tupleExpr(): Either[Error, TupleExpr] = {
             for {
                 lpar <- accept[LPAR]()
                 args <- testList()
             } yield TupleExpr(args).setPos(lpar.pos)
         }
 
-        def listExpr(): Either[PyParseError, ListExpr] = {
+        def listExpr(): Either[Error, ListExpr] = {
             accept[LSQB]() match {
                 case Right(lsqb) =>
                     reader.peek() match {
@@ -398,7 +400,7 @@ class PyParser(val lexer: Lexer) {
                         case Some(v) => Right(FloatLiteral(v).setPos(tok.pos))
                         case None =>
                             // parse error recovery
-                            parseErrors = PyParseError("Invalid float point number", tok.pos) :: parseErrors
+                            parseErrors = common.Error("Invalid float point number", tok.pos) :: parseErrors
                             Right(FloatLiteral(0).setPos(tok.pos))
                     }
                 case IntegerLiteralToken(int) =>
@@ -407,22 +409,22 @@ class PyParser(val lexer: Lexer) {
                         case Some(v) => Right(IntegerLiteral(v).setPos(tok.pos))
                         case None =>
                             // parse error recovery
-                            parseErrors = PyParseError("Invalid integer number", tok.pos) :: parseErrors
+                            parseErrors = common.Error("Invalid integer number", tok.pos) :: parseErrors
                             Right(IntegerLiteral(0).setPos(tok.pos))
                     }
                 case StringLiteralToken(str) => reader.consume(); Right(StringLiteral(str).setPos(tok.pos));
                 case NONE() => reader.consume(); Right(NoneLiteral().setPos(tok.pos))
                 case TRUE() => reader.consume(); Right(BoolLiteral(true).setPos(tok.pos))
                 case FALSE() => reader.consume(); Right(BoolLiteral(false).setPos(tok.pos))
-                case _ => Left(PyParseError(s"Expect an tuple/list/identifier/None/True/False but found $tok", tok.pos))
+                case _ => Left(common.Error(s"Expect an tuple/list/identifier/None/True/False but found $tok", tok.pos))
             }
         } else {
             eofError("literal or list of literals")
         }
     }
 
-    def trailer(): Either[PyParseError, AtomExpression] = {
-        def callTrailer(): Either[PyParseError, CallExpr] = {
+    def trailer(): Either[Error, AtomExpression] = {
+        def callTrailer(): Either[Error, CallExpr] = {
             accept[LPAR]() match {
                 case Right(lpar) =>
                     reader.peek() match {
@@ -437,7 +439,7 @@ class PyParser(val lexer: Lexer) {
             }
         }
 
-        def indexTrailer(): Either[PyParseError, IndexExpr] = {
+        def indexTrailer(): Either[Error, IndexExpr] = {
             for {
                 lsqb <- accept[LSQB]()
                 subscript <- test()
@@ -445,7 +447,7 @@ class PyParser(val lexer: Lexer) {
             } yield IndexExpr(null, subscript).setPos(lsqb.pos)
         }
 
-        def memberTrailer(): Either[PyParseError, MemberExpr] = {
+        def memberTrailer(): Either[Error, MemberExpr] = {
             for {
                 dot <- accept[DOT]()
                 id <- accept[IdentifierToken]()
@@ -456,14 +458,14 @@ class PyParser(val lexer: Lexer) {
             case Some(LPAR()) => callTrailer()
             case Some(LSQB()) => indexTrailer()
             case Some(DOT()) => memberTrailer()
-            case Some(tok@_) => Left(PyParseError(s"Expect a member/function/index call but found $tok", tok.pos))
+            case Some(tok@_) => Left(common.Error(s"Expect a member/function/index call but found $tok", tok.pos))
             case None => eofError("member/function/index call")
         }
     }
 
-    def argsList(): Either[PyParseError, List[Expression]] = testList()
+    def argsList(): Either[Error, List[Expression]] = testList()
 
-    def exprList(): Either[PyParseError, List[Expression]] = {
+    def exprList(): Either[Error, List[Expression]] = {
         expr() match {
             case Right(init) => repeat(_==COMMA(), () => {
                 for {
@@ -475,7 +477,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def testList(): Either[PyParseError, List[Expression]] = {
+    def testList(): Either[Error, List[Expression]] = {
         test() match {
             case Right(init) => repeat(_==COMMA(), () => {
                 for {
@@ -487,46 +489,46 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def delStmt(): Either[PyParseError, DelStmt] = {
+    def delStmt(): Either[Error, DelStmt] = {
         for {
             op <- accept[DEL]()
             id <- accept[IdentifierToken]()
         } yield DelStmt(id).setPos(op.pos)
     }
 
-    def passStmt(): Either[PyParseError, PassStmt] = {
+    def passStmt(): Either[Error, PassStmt] = {
         for {
             pass <- accept[PASS]()
         } yield PassStmt().setPos(pass.pos)
     }
 
-    def importStmt(): Either[PyParseError, ImportStmt] = {
+    def importStmt(): Either[Error, ImportStmt] = {
         for {
             tok <- accept[IMPORT]()
             mod <- accept[IdentifierToken]()
         } yield ImportStmt(mod).setPos(tok.pos)
     }
 
-    def breakStmt(): Either[PyParseError, BreakStmt] = {
+    def breakStmt(): Either[Error, BreakStmt] = {
         for {
             tok <- accept[BREAK]()
         } yield BreakStmt().setPos(tok.pos)
     }
 
-    def continueStmt(): Either[PyParseError, ContinueStmt] = {
+    def continueStmt(): Either[Error, ContinueStmt] = {
         for {
             tok <- accept[CONTINUE]()
         } yield ContinueStmt().setPos(tok.pos)
     }
 
-    def returnStmt(): Either[PyParseError, ReturnStmt] = {
+    def returnStmt(): Either[Error, ReturnStmt] = {
         for {
             tok <- accept[RETURN]()
             list <- optional(_!=NewLine(), exprList, Nil)
         } yield ReturnStmt(list).setPos(tok.pos)
     }
 
-    private def testElseIfStmt(condition: Expression, thenBody: List[Statement], pos:PyPosition): Either[PyParseError, IfStmt] = {
+    private def testElseIfStmt(condition: Expression, thenBody: List[Statement], pos:Position): Either[Error, IfStmt] = {
         reader.peek() match {
             case Some(t@ELIF()) =>
                 elifStmt() match {
@@ -542,7 +544,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def ifStmt(): Either[PyParseError, IfStmt] = {
+    def ifStmt(): Either[Error, IfStmt] = {
         (for {
             ifTok <- accept[IF]()
             condition <- test()
@@ -554,7 +556,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def elifStmt(): Either[PyParseError, IfStmt] = {
+    def elifStmt(): Either[Error, IfStmt] = {
         (for {
             elifTok <- accept[ELIF]()
             condition <- test()
@@ -566,7 +568,7 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def elseStmt(): Either[PyParseError, List[Statement]] = {
+    def elseStmt(): Either[Error, List[Statement]] = {
         for {
             _ <- accept[ELSE]()
             _ <- accept[COLON]()
@@ -574,7 +576,7 @@ class PyParser(val lexer: Lexer) {
         } yield elseStmts
     }
 
-    def whileStmt(): Either[PyParseError, WhileStmt] = {
+    def whileStmt(): Either[Error, WhileStmt] = {
         for {
             t <- accept[WHILE]()
             cond <- test()
@@ -583,7 +585,7 @@ class PyParser(val lexer: Lexer) {
         } yield WhileStmt(cond, body).setPos(t.pos)
     }
 
-    def forStmt(): Either[PyParseError, ForStmt] = {
+    def forStmt(): Either[Error, ForStmt] = {
         for {
             t <- accept[FOR]()
             iterator <- accept[IdentifierToken]()
@@ -594,7 +596,7 @@ class PyParser(val lexer: Lexer) {
         } yield ForStmt(Identifier(iterator.value), iterable, body).setPos(t.pos)
     }
 
-    def block(): Either[PyParseError, List[Statement]] = {
+    def block(): Either[Error, List[Statement]] = {
         for {
             _ <- accept[NewLine]()
             _ <- accept[Indent]()
@@ -619,7 +621,7 @@ class PyParser(val lexer: Lexer) {
         } yield stmtList
     }
 
-    def funcDef(): Either[PyParseError, FuncDef] = {
+    def funcDef(): Either[Error, FuncDef] = {
         for {
             t <- accept[DEF]()
             id <- accept[IdentifierToken]()
@@ -635,7 +637,7 @@ class PyParser(val lexer: Lexer) {
         } yield FuncDef(id, params, returnType, funcBlock).setPos(t.pos)
     }
 
-    def parameters(): Either[PyParseError, List[TypedVar]] = {
+    def parameters(): Either[Error, List[TypedVar]] = {
         for {
             _ <- accept[LPAR]()
             typedArgs <- typeArgsList()
@@ -643,7 +645,7 @@ class PyParser(val lexer: Lexer) {
         } yield typedArgs
     }
 
-    def typeArgsList(): Either[PyParseError, List[TypedVar]] = {
+    def typeArgsList(): Either[Error, List[TypedVar]] = {
         typedVarDef() match {
             case Right(value) =>
                 repeat(_==COMMA(),
@@ -657,10 +659,10 @@ class PyParser(val lexer: Lexer) {
         }
     }
 
-    def classDef(): Either[PyParseError, ClassDef] = {
+    def classDef(): Either[Error, ClassDef] = {
         val rootClassTok = IdentifierToken("Object")
 
-        def classArgsList(): Either[PyParseError, Identifier] = {
+        def classArgsList(): Either[Error, Identifier] = {
             reader.peek() match {
                 case Some(lpar@LPAR()) =>
                     for {
@@ -672,7 +674,7 @@ class PyParser(val lexer: Lexer) {
             }
         }
 
-        def classBody(): Either[PyParseError, List[Declaration]] = {
+        def classBody(): Either[Error, List[Declaration]] = {
             repeat({
                 case IdentifierToken(_) | DEF() | NewLine() => true
                 case _ => false
@@ -683,7 +685,7 @@ class PyParser(val lexer: Lexer) {
                     case Some(line@NewLine()) =>
                         reader.consume()
                         Right(PassStmt().setPos(line.pos))
-                    case Some(tok@_) => Left(PyParseError(s"Expect a declaration but found $tok", tok.pos))
+                    case Some(tok@_) => Left(common.Error(s"Expect a declaration but found $tok", tok.pos))
                     case None => eofError("statement")
                 }
             }, (t: Declaration, L: List[Declaration]) => {

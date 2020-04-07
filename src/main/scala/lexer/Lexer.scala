@@ -1,7 +1,10 @@
 package lexer
 
 import java.io.{BufferedReader, Reader}
+
+import common.{Dedent, EndOfFile, FloatPointLiteralToken, IdentifierToken, Indent, IntegerLiteralToken, Keyword, NewLine, OperatorToken, Position, PyToken, StringLiteralToken, SyntaxError}
 import utils.Util
+
 import scala.collection.mutable
 
 class Lexer(input: Reader) {
@@ -19,7 +22,7 @@ class Lexer(input: Reader) {
     private val blockEndSet = Set(')', ']', '}')
     private val blockMap = Map('(' -> ')', '[' -> ']', '{' -> '}')
     private var isEof = false
-    private var curPosition: PyPosition = PyPosition(0, 0)
+    private var curPosition: Position = Position(0, 0)
 
     @inline
     private def nextLine: Option[String] = Option(reader.readLine())
@@ -78,7 +81,7 @@ class Lexer(input: Reader) {
         }
 
         lexeme.clear()
-        curPosition = PyPosition(line, ptr+1) // currently ptr points to the \n
+        curPosition = Position(line, ptr+1) // currently ptr points to the \n
         if (isEndOfLine) {
             nextLine match {
                 case Some(lineString) =>
@@ -98,7 +101,7 @@ class Lexer(input: Reader) {
             }
         }
 
-        curPosition = PyPosition(line, ptr+1)
+        curPosition = Position(line, ptr+1)
         if (isStartOfLine && !isInEnclosedBlock) {
             bufferLine.indexWhere(x => x!=' ' && x!='\t') match {
                 case x if x >= 0 =>
@@ -117,7 +120,7 @@ class Lexer(input: Reader) {
             }
         }
 
-        curPosition = PyPosition(line, ptr+1)
+        curPosition = Position(line, ptr+1)
         peekNextChar() match {
             case None => _getToken
             case Some(c) =>

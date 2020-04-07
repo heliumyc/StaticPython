@@ -1,11 +1,12 @@
 package analysis
 
-import astnodes.{BreakStmt, ContinueStmt, DelStmt, ErrorStmt, ForStmt, IdType, IfStmt, ImportStmt, PassStmt, Program, ReturnStmt, TypedVar, WhileStmt}
+import astnodes._
 import astnodes.declarations._
 import astnodes.expressions._
-import astnodes.literals.{BoolLiteral, FloatLiteral, IntegerLiteral, NoneLiteral, StringLiteral}
+import astnodes.literals._
 
 trait NodeAnalyzer[T] {
+    def analyze(node: Program): T
     def analyze(node: ClassDef): T
     def analyze(node: FuncDef): T
     def analyze(node: VarDef): T
@@ -33,7 +34,6 @@ trait NodeAnalyzer[T] {
     def analyze(node: IfStmt): T
     def analyze(node: ImportStmt): T
     def analyze(node: PassStmt): T
-    def analyze(node: Program): T
     def analyze(node: ReturnStmt): T
     def analyze(node: TypedVar): T
     def analyze(node: WhileStmt): T

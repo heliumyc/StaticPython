@@ -1,4 +1,4 @@
-package lexer
+package common
 
 sealed trait PyToken extends MyPositional
 

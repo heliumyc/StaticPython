@@ -6,11 +6,11 @@ import analysis.NodeAnalyzer
 import astnodes.declarations.{ClassDef, FuncDef, VarDef}
 import astnodes.expressions.{AssignExpr, BinaryExpr, CallExpr, Identifier, IfExpr, IndexExpr, ListExpr, MemberExpr, TupleExpr, UnaryExpr}
 import astnodes.literals.{BoolLiteral, FloatLiteral, IntegerLiteral, NoneLiteral, StringLiteral}
-import lexer.{NoPosition, PyPosition}
+import common.{NoPosition, Position}
 
 trait PyAst {
-    var pos:PyPosition = NoPosition
-    def setPos(position: PyPosition): this.type = {
+    var pos:Position = NoPosition
+    def setPos(position: Position): this.type = {
         this.pos = position
         this
     }

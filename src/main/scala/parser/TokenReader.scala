@@ -1,6 +1,7 @@
 package parser
 
-import lexer.{EndOfFile, Lexer, PyToken}
+import common.PyToken
+import lexer.Lexer
 
 import scala.collection.mutable
 

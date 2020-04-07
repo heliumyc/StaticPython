@@ -1,7 +1,7 @@
 package astnodes
 
-import parser.PyParseError
+import common.Error
 
-case class Program(stmtList: List[Statement], errList: List[PyParseError]) extends PyAst {
+case class Program(stmtList: List[Statement], errList: List[Error]) extends PyAst {
 
 }
