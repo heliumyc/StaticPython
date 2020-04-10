@@ -76,7 +76,7 @@ class PyParser(val lexer: Lexer) {
                     }
             }
         }
-        Program(statementList.reverse, parseErrors.reverse)
+        Program(statementList.reverse).addError(parseErrors.reverse)
     }
 
     def statement(): Either[Error, Statement] = {
