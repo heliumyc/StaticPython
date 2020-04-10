@@ -129,7 +129,7 @@ class PyParser(val lexer: Lexer) {
                         expression <- expr()
                     } yield VarDef(typedVar, expression).setPos(typedVar.pos)
                 } else {
-                    Right(VarDef(typedVar, NoneLiteral()).setPos(typedVar.pos))
+                    Right(VarDef(typedVar, Undefined()).setPos(typedVar.pos))
                 }
         }
     }
