@@ -108,7 +108,7 @@ class PyParser(val lexer: Lexer) {
             case BREAK() => breakStmt()
             case CONTINUE() => continueStmt()
             case RETURN() => returnStmt()
-            case tok@_ => Left(common.PyError(s"Expect a statement start but found $tok", tok.pos))
+            case _ => exprStmt()
         }
 
         stmt match {
