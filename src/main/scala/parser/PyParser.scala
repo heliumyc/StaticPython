@@ -522,10 +522,21 @@ class PyParser(val lexer: Lexer) {
     }
 
     def delStmt(): Either[PyError, DelStmt] = {
+        def idList(): Either[PyError, List[Identifier]] = {
+            accept[IdentifierToken]() match {
+                case Right(init) => repeat(_==COMMA(), () => {
+                    for {
+                        _ <- accept[COMMA]()
+                        id <- accept[IdentifierToken]()
+                    } yield id
+                }, (v: IdentifierToken, L: List[Identifier]) => Identifier(v.value) :: L, (L: List[Identifier]) => L.reverse, Identifier(init.value) :: Nil)
+                case Left(err) => Left(err)
+            }
+        }
         for {
             op <- accept[DEL]()
-            id <- accept[IdentifierToken]()
-        } yield DelStmt(Identifier(id.value)).setPos(op.pos)
+            list <- idList()
+        } yield DelStmt(list).setPos(op.pos)
     }
 
     def passStmt(): Either[PyError, PassStmt] = {
