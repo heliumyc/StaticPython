@@ -1,5 +1,5 @@
 package astnodes
 
-import common.IdentifierToken
+import astnodes.expressions.Identifier
 
-case class ImportStmt(module: IdentifierToken) extends Statement
+case class ImportStmt(module: Identifier) extends Statement

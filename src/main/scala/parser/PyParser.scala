@@ -6,7 +6,7 @@ import astnodes.literals._
 import astnodes.operators._
 import astnodes.types._
 import astnodes._
-import common.{AND, BREAK, CLASS, COLON, COMMA, CONTINUE, DEF, DEL, DOT, DOUBLESLASH, DOUBLESTAR, Dedent, ELIF, ELSE, EQUAL, EndOfFile, PyError, FALSE, FOR, FloatPointLiteralToken, GREATER, GREATEREQUAL, IF, IMPORT, IN, IS, IdentifierToken, Indent, IntegerLiteralToken, LESS, LESSEQUAL, LPAR, LSQB, MINUS, NONE, NOT, NOTEQUAL, NewLine, NoPosition, OR, PASS, PERCENT, PLUS, Position, PyToken, RARROW, RETURN, RPAR, RSQB, SLASH, STAR, StringLiteralToken, TRUE, WHILE}
+import common._
 import lexer._
 import scala.reflect.{ClassTag, classTag}
 
@@ -139,7 +139,7 @@ class PyParser(val lexer: Lexer) {
             id <- accept[IdentifierToken]()
             _ <- accept[COLON]()
             typeName <- varType()
-        } yield TypedVar(Identifier(id.value), typeName).setPos(id.pos)
+        } yield TypedVar(Identifier.fromToken(id), typeName).setPos(id.pos)
     }
 
     def varType(): Either[PyError, ValueType] = {
@@ -258,11 +258,17 @@ class PyParser(val lexer: Lexer) {
 
         while (reader.nonEmpty()) {
             reader.peek().get match {
-                case op@(LESS() | GREATER() | LESSEQUAL() | GREATEREQUAL() | EQUAL() | IN() | NOTEQUAL()) =>
+                case op@(LESS() | GREATER() | LESSEQUAL() | GREATEREQUAL() | EQUAL() | IN()) =>
                     reader.consume()
                     expr() match {
                         case Left(err) => return Left(err)
                         case Right(e) => leftExpr = BinaryExpr(compTokToCompOp(op), leftExpr, e).setPos(e.pos)
+                    }
+                case op@NOTEQUAL() =>
+                    reader.consume()
+                    expr() match {
+                        case Left(err) => return Left(err)
+                        case Right(e) => leftExpr = UnaryExpr(Not(), BinaryExpr(Equal(), leftExpr, e).setPos(e.pos)).setPos(op.pos)
                     }
                 case notTok@NOT() =>
                     reader.consume()
@@ -425,7 +431,7 @@ class PyParser(val lexer: Lexer) {
             tok match {
                 case LPAR() => tupleExpr()
                 case LSQB() => listExpr()
-                case IdentifierToken(id) => reader.consume(); Right(Identifier(id).setPos(tok.pos))
+                case id@IdentifierToken(_) => reader.consume(); Right(Identifier.fromToken(id))
                 case FloatPointLiteralToken(float) =>
                     reader.consume()
                     float.toDoubleOption match {
@@ -483,7 +489,7 @@ class PyParser(val lexer: Lexer) {
             for {
                 dot <- accept[DOT]()
                 id <- accept[IdentifierToken]()
-            } yield MemberExpr(null, Identifier(id.value)).setPos(dot.pos)
+            } yield MemberExpr(null, Identifier.fromToken(id)).setPos(dot.pos)
         }
 
         reader.peek() match {
@@ -529,7 +535,8 @@ class PyParser(val lexer: Lexer) {
                         _ <- accept[COMMA]()
                         id <- accept[IdentifierToken]()
                     } yield id
-                }, (v: IdentifierToken, L: List[Identifier]) => Identifier(v.value) :: L, (L: List[Identifier]) => L.reverse, Identifier(init.value) :: Nil)
+                }, (v: IdentifierToken, L: List[Identifier]) => Identifier.fromToken(v) :: L,
+                    (L: List[Identifier]) => L.reverse, Identifier.fromToken(init) :: Nil)
                 case Left(err) => Left(err)
             }
         }
@@ -550,7 +557,7 @@ class PyParser(val lexer: Lexer) {
         for {
             tok <- accept[IMPORT]()
             mod <- accept[IdentifierToken]()
-        } yield ImportStmt(Identifier(mod.value)).setPos(tok.pos)
+        } yield ImportStmt(Identifier.fromToken(mod)).setPos(tok.pos)
     }
 
     def breakStmt(): Either[PyError, BreakStmt] = {
@@ -637,7 +644,7 @@ class PyParser(val lexer: Lexer) {
             iterable <- test()
             _ <- accept[COLON]()
             body <- block()
-        } yield ForStmt(Identifier(iterator.value), iterable, body).setPos(t.pos)
+        } yield ForStmt(Identifier.fromToken(iterator), iterable, body).setPos(t.pos)
     }
 
     def block(): Either[PyError, List[Statement]] = {
@@ -678,7 +685,7 @@ class PyParser(val lexer: Lexer) {
             }, None)
             _ <- accept[COLON]()
             funcBlock <- block()
-        } yield FuncDef(Identifier(id.value), params, returnType, funcBlock).setPos(t.pos)
+        } yield FuncDef(Identifier.fromToken(id), params, returnType, funcBlock).setPos(t.pos)
     }
 
     def parameters(): Either[PyError, List[TypedVar]] = {
@@ -711,10 +718,11 @@ class PyParser(val lexer: Lexer) {
                 case Some(lpar@LPAR()) =>
                     for {
                         _ <- accept[LPAR]()
-                        id <- optional({ case IdentifierToken(_) => true; case _ => false }, accept[IdentifierToken], rootClassTok)
+                        id <- optional({ case IdentifierToken(_) => true; case _ => false },
+                            accept[IdentifierToken], rootClassTok.setPos(lpar.pos))
                         _ <- accept[RPAR]()
-                    } yield Identifier(id.value).setPos(lpar.pos)
-                case _ => Right(Identifier(rootClassTok.value))
+                    } yield Identifier.fromToken(id)
+                case _ => Right(Identifier.fromToken(rootClassTok))
             }
         }
 
@@ -746,6 +754,6 @@ class PyParser(val lexer: Lexer) {
             _ <- accept[Indent]()
             body <- classBody()
             _ <- accept[Dedent]()
-        } yield ClassDef(Identifier(className.value).setPos(className.pos), baseClass, body)
+        } yield ClassDef(Identifier.fromToken(className), baseClass, body)
     }
 }

@@ -1,5 +1,5 @@
 package astnodes
 
-case class ReturnStmt(returnExpr: List[Expression]) extends Statement {
+case class ReturnStmt(returnExpr: Expression) extends Statement {
 
 }

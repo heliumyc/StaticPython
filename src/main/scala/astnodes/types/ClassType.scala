@@ -1,3 +1,5 @@
 package astnodes.types
 
-case class ClassType() extends PyType
+case class ClassType(name: String) extends ValueType {
+
+}

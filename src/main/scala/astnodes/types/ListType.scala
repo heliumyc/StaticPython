@@ -1,3 +1,5 @@
 package astnodes.types
 
-case class ListType(elementType: PyType) extends PyType
+case class ListType(elementType: ValueType) extends ValueType {
+
+}

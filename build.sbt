@@ -8,3 +8,4 @@ lazy val root = (project in file(".")).
 
 libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.8.0"
 libraryDependencies += "com.novocode" % "junit-interface" % "0.8" % "test->default"
+//libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2"

@@ -2,6 +2,6 @@ package astnodes.types
 
 import astnodes.PyAst
 
-trait PyType extends PyAst{
+trait PyType extends PyAst {
 
 }

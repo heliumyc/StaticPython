@@ -1,8 +1,8 @@
 package astnodes
 
-import astnodes.types.PyType
-import common.IdentifierToken
+import astnodes.expressions.Identifier
+import astnodes.types.{PyType, ValueType}
 
-case class TypedVar(identifier: IdentifierToken, varType: PyType) extends PyAst {
+case class TypedVar(identifier: Identifier, varType: ValueType) extends PyAst {
 
 }

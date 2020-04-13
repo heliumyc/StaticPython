@@ -1,7 +1,7 @@
 package astnodes
 
-import common.IdentifierToken
+import astnodes.expressions.Identifier
 
-case class DelStmt(identifier: IdentifierToken) extends Statement {
+case class DelStmt(idList: List[Identifier]) extends Statement {
 
 }

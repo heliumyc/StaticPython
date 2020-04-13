@@ -2,8 +2,9 @@ package astnodes
 
 import analysis.NodeAnalyzer
 import astnodes.declarations.{ClassDef, FuncDef, VarDef}
-import astnodes.expressions.{AssignExpr, BinaryExpr, CallExpr, Identifier, IfExpr, IndexExpr, ListExpr, MemberExpr, TupleExpr, UnaryExpr}
+import astnodes.expressions.{AssignExpr, BinaryExpr, CallExpr, Identifier, IfExpr, IndexExpr, ListExpr, MemberExpr, TupleExpr, UnaryExpr, Undefined}
 import astnodes.literals.{BoolLiteral, FloatLiteral, IntegerLiteral, NoneLiteral, StringLiteral}
+import astnodes.types.{ClassType, FuncType, ListType, TupleType}
 import common.{NoPosition, Position}
 
 trait PyAst {
@@ -38,7 +39,6 @@ trait PyAst {
             case t:DelStmt => nodeAnalyzer.analyze(t)
             case t:ErrorStmt => nodeAnalyzer.analyze(t)
             case t:ForStmt => nodeAnalyzer.analyze(t)
-            case t:IdType => nodeAnalyzer.analyze(t)
             case t:IfStmt => nodeAnalyzer.analyze(t)
             case t:ImportStmt => nodeAnalyzer.analyze(t)
             case t:PassStmt => nodeAnalyzer.analyze(t)
@@ -46,6 +46,11 @@ trait PyAst {
             case t:ReturnStmt => nodeAnalyzer.analyze(t)
             case t:TypedVar => nodeAnalyzer.analyze(t)
             case t:WhileStmt => nodeAnalyzer.analyze(t)
+            case t:FuncType => nodeAnalyzer.analyze(t)
+            case t:ClassType => nodeAnalyzer.analyze(t)
+            case t:ListType => nodeAnalyzer.analyze(t)
+            case t:TupleType => nodeAnalyzer.analyze(t)
+            case t:Undefined => nodeAnalyzer.analyze(t)
         }
     }
 }
