@@ -79,6 +79,14 @@ class PyParser(val lexer: Lexer) {
         Program(statementList.reverse).addError(parseErrors.reverse)
     }
 
+    def newlines(): Either[PyError, PyToken] = {
+        accept[NewLine]() match {
+            case Right(_) =>
+                repeat(_==NewLine(), accept[NewLine], (x:PyToken,_:PyToken)=>x, (x:PyToken)=>x, NewLine())
+            case e@Left(_) => e
+        }
+    }
+
     def statement(): Either[PyError, Statement] = {
         if (reader.nonEmpty()) {
             reader.peek().get match {
@@ -575,15 +583,15 @@ class PyParser(val lexer: Lexer) {
     def returnStmt(): Either[PyError, ReturnStmt] = {
         for {
             tok <- accept[RETURN]()
-            list <- optional(_ != NewLine(), exprList, Nil)
+            list <- optional(x => x != NewLine() && x != Dedent(), exprList, Nil)
         } yield ReturnStmt(if (list.isEmpty) NoneLiteral() else if (list.size == 1) list.head else TupleExpr(list)).setPos(tok.pos)
     }
 
-    private def testElseIfStmt(condition: Expression, thenBody: List[Statement], pos: Position): Either[PyError, IfStmt] = {
+    private def testElseIfStmt(condition: Expression, thenBody: BlockStmt): Either[PyError, IfStmt] = {
         reader.peek() match {
             case Some(t@ELIF()) =>
                 elifStmt() match {
-                    case Right(el) => Right(IfStmt(condition, thenBody, el :: Nil).setPos(t.pos))
+                    case Right(el) => Right(IfStmt(condition, thenBody, BlockStmt(el :: Nil).setPos(el.pos)).setPos(t.pos))
                     case Left(err) => Left(err)
                 }
             case Some(t@ELSE()) =>
@@ -591,35 +599,35 @@ class PyParser(val lexer: Lexer) {
                     case Right(es) => Right(IfStmt(condition, thenBody, es).setPos(t.pos))
                     case Left(err) => Left(err)
                 }
-            case _ => Right(IfStmt(condition, thenBody, Nil).setPos(condition.pos))
+            case _ => Right(IfStmt(condition, thenBody, BlockStmt(Nil).setPos(thenBody.pos)).setPos(condition.pos))
         }
     }
 
     def ifStmt(): Either[PyError, IfStmt] = {
         (for {
-            ifTok <- accept[IF]()
+            _ <- accept[IF]()
             condition <- test()
             _ <- accept[COLON]()
             thenBody <- block()
-        } yield (ifTok, condition, thenBody)) match {
+        } yield (condition, thenBody)) match {
             case Left(err) => Left(err)
-            case Right((ifTok, condition, thenBody)) => testElseIfStmt(condition, thenBody, ifTok.pos)
+            case Right((condition, thenBody)) => testElseIfStmt(condition, thenBody)
         }
     }
 
     def elifStmt(): Either[PyError, IfStmt] = {
         (for {
-            elifTok <- accept[ELIF]()
+            _ <- accept[ELIF]()
             condition <- test()
             _ <- accept[COLON]()
             thenBody <- block()
-        } yield (elifTok, condition, thenBody)) match {
+        } yield (condition, thenBody)) match {
             case Left(err) => Left(err)
-            case Right((elifTok, condition, thenBody)) => testElseIfStmt(condition, thenBody, elifTok.pos)
+            case Right((condition, thenBody)) => testElseIfStmt(condition, thenBody)
         }
     }
 
-    def elseStmt(): Either[PyError, List[Statement]] = {
+    def elseStmt(): Either[PyError, BlockStmt] = {
         for {
             _ <- accept[ELSE]()
             _ <- accept[COLON]()
@@ -647,10 +655,10 @@ class PyParser(val lexer: Lexer) {
         } yield ForStmt(Identifier.fromToken(iterator), iterable, body).setPos(t.pos)
     }
 
-    def block(): Either[PyError, List[Statement]] = {
+    def block(): Either[PyError, BlockStmt] = {
         for {
-            _ <- accept[NewLine]()
-            _ <- accept[Indent]()
+            _ <- newlines()
+            ind <- accept[Indent]()
             stmtList <- repeat(_ != Dedent(), () => {
                 reader.peek() match {
                     case Some(IF()) => ifStmt()
@@ -669,7 +677,7 @@ class PyParser(val lexer: Lexer) {
                 }
             }, (L: List[Statement]) => L.reverse, Nil)
             _ <- accept[Dedent]()
-        } yield stmtList
+        } yield BlockStmt(stmtList).setPos(ind.pos)
     }
 
     def funcDef(): Either[PyError, FuncDef] = {
@@ -681,8 +689,8 @@ class PyParser(val lexer: Lexer) {
                 for {
                     _ <- accept[RARROW]()
                     returnType <- varType()
-                } yield Some(returnType)
-            }, None)
+                } yield returnType
+            }, NoneType())
             _ <- accept[COLON]()
             funcBlock <- block()
         } yield FuncDef(Identifier.fromToken(id), params, returnType, funcBlock).setPos(t.pos)
@@ -711,7 +719,7 @@ class PyParser(val lexer: Lexer) {
     }
 
     def classDef(): Either[PyError, ClassDef] = {
-        val rootClassTok = IdentifierToken("Object")
+        val rootClassTok = IdentifierToken("object")
 
         def classArgsList(): Either[PyError, Identifier] = {
             reader.peek() match {
@@ -727,16 +735,16 @@ class PyParser(val lexer: Lexer) {
         }
 
         def classBody(): Either[PyError, List[Declaration]] = {
-            repeat({
-                case IdentifierToken(_) | DEF() | NewLine() => true
-                case _ => false
-            }, () => {
+            repeat(_!=Dedent(), () => {
                 reader.peek() match {
                     case Some(IdentifierToken(_)) => varDef()
                     case Some(DEF()) => funcDef()
-                    case Some(line@NewLine()) =>
+                    case Some(PASS()) =>
                         reader.consume()
-                        Right(PassStmt().setPos(line.pos))
+                        Right(PassStmt())
+                    case Some(NewLine()) =>
+                        reader.consume()
+                        Right(PassStmt())
                     case Some(tok@_) => Left(common.PyError(s"Expect a declaration but found $tok", tok.pos))
                     case None => eofError("statement")
                 }
@@ -750,7 +758,7 @@ class PyParser(val lexer: Lexer) {
             className <- accept[IdentifierToken]()
             baseClass <- classArgsList()
             _ <- accept[COLON]()
-            _ <- accept[NewLine]()
+            _ <- newlines()
             _ <- accept[Indent]()
             body <- classBody()
             _ <- accept[Dedent]()
