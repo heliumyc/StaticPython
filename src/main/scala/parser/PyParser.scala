@@ -192,7 +192,7 @@ class PyParser(val lexer: Lexer) {
     }
 
     def exprStmt(): Either[PyError, Expression] = {
-        val leftHandSide = atomExpr() match {
+        val leftHandSide = test() match {
             case Right(v) => v
             case Left(err) => return Left(err)
         }
@@ -266,7 +266,7 @@ class PyParser(val lexer: Lexer) {
 
         while (reader.nonEmpty()) {
             reader.peek().get match {
-                case op@(LESS() | GREATER() | LESSEQUAL() | GREATEREQUAL() | EQUAL() | IN()) =>
+                case op@(LESS() | GREATER() | LESSEQUAL() | GREATEREQUAL() | EQEQUAL() | IN()) =>
                     reader.consume()
                     expr() match {
                         case Left(err) => return Left(err)
@@ -276,7 +276,7 @@ class PyParser(val lexer: Lexer) {
                     reader.consume()
                     expr() match {
                         case Left(err) => return Left(err)
-                        case Right(e) => leftExpr = UnaryExpr(Not(), BinaryExpr(Equal(), leftExpr, e).setPos(e.pos)).setPos(op.pos)
+                        case Right(e) => leftExpr = BinaryExpr(NotEqual(), leftExpr, e).setPos(e.pos).setPos(op.pos)
                     }
                 case notTok@NOT() =>
                     reader.consume()
@@ -358,12 +358,12 @@ class PyParser(val lexer: Lexer) {
                 for {
                     op <- accept[PLUS]()
                     fac <- factor()
-                } yield UnaryExpr(Plus(), fac).setPos(op.pos)
+                } yield UnaryExpr(Positive(), fac).setPos(op.pos)
             case Some(MINUS()) =>
                 for {
                     op <- accept[MINUS]()
                     fac <- factor()
-                } yield UnaryExpr(Minus(), fac).setPos(op.pos)
+                } yield UnaryExpr(Negative(), fac).setPos(op.pos)
             case _ =>
                 for {
                     pow <- power()
@@ -410,7 +410,7 @@ class PyParser(val lexer: Lexer) {
                             _ <- accept[RPAR]()
                         } yield {
                             if (args.size > 1) TupleExpr(args).setPos(lpar.pos)
-                            else if (args.size == 1) args.head
+                            else if (args.size == 1) args.head   // not tuple, just normal bracket
                             else TupleExpr(Nil).setPos(lpar.pos) // this is a dummy branch which we will never reach
                         }
                         case None => eofError("list of expressions")
