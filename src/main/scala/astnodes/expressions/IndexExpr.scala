@@ -1,5 +1,5 @@
 package astnodes.expressions
 
-import astnodes.Expression
+import astnodes.{Assignable, Expression}
 
-case class IndexExpr(callee:Expression, index:Expression) extends AtomExpression
+case class IndexExpr(callee:Expression, index:Expression) extends AtomExpression with Assignable

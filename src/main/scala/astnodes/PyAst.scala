@@ -46,11 +46,8 @@ trait PyAst {
             case t:ReturnStmt => nodeAnalyzer.analyze(t)
             case t:TypedVar => nodeAnalyzer.analyze(t)
             case t:WhileStmt => nodeAnalyzer.analyze(t)
-            case t:FuncType => nodeAnalyzer.analyze(t)
-            case t:ClassType => nodeAnalyzer.analyze(t)
-            case t:ListType => nodeAnalyzer.analyze(t)
-            case t:TupleType => nodeAnalyzer.analyze(t)
             case t:Undefined => nodeAnalyzer.analyze(t)
+            case t:BlockStmt => nodeAnalyzer.analyze(t)
         }
     }
 }

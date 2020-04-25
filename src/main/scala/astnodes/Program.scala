@@ -4,7 +4,7 @@ import common.PyError
 
 import scala.collection.mutable.ListBuffer
 
-case class Program(stmtList: List[Statement]) extends PyAst {
+case class Program(stmtList: List[Statement]) extends PyAst with ScopedAst {
     val errors: ListBuffer[PyError] = ListBuffer[PyError]()
 
     def addError(error: PyError): this.type = {

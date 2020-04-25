@@ -5,7 +5,6 @@ trait Operator
 object Operator {
     def operatorNameMap(op: Operator): String = op match {
         case Equal() => "__eq__"
-        case NotEqual() => "__ne__"
         case Less() => "__lt__"
         case Greater() => "__gt__"
         case GreaterEq() => "__ge__"
@@ -25,6 +24,13 @@ object Operator {
         case FloorDiv() => "__floordiv__"
         case Power() => "__pow__"
     }
+
+    def isCoercionOp(operator: Operator): Boolean = {
+        operator match {
+            case Equal()|Less()|Greater()|LessEq()|GreaterEq()|Plus()|Minus()|Multiply()|Divide()|Modular()|FloorDiv()|Power() => true
+            case _ => false
+        }
+    }
 }
 
 trait UnaryOp extends Operator
@@ -33,8 +39,6 @@ trait BinaryOp extends Operator
 
 // comparison operator
 case class Equal() extends BinaryOp
-
-case class NotEqual() extends BinaryOp
 
 case class Less() extends BinaryOp
 

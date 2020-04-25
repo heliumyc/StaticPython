@@ -1,9 +1,9 @@
 package astnodes.expressions
 
-import astnodes.Expression
+import astnodes.{Assignable, Expression}
 import common.IdentifierToken
 
-case class Identifier(name:String) extends Expression {
+case class Identifier(name:String) extends Expression with Assignable {
 
 }
 

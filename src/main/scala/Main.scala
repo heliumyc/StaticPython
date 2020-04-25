@@ -14,7 +14,7 @@ object Main {
     def main(args: Array[String]): Unit = {
         // lexer
 //        val reader = new FileReader("/Users/yucong/chocopy.py")
-        val reader = new FileReader("/Users/yucong/tmp.py")
+        val reader = new FileReader("/Users/yucong/tmp2.py")
         val lexer = new Lexer(reader)
         // print tokens
 //        while (lexer.hasNextToken) {

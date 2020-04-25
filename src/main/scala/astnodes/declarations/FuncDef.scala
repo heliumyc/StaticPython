@@ -1,9 +1,10 @@
 package astnodes.declarations
 
 import astnodes.expressions.Identifier
-import astnodes.{Statement, TypedVar}
+import astnodes.{BlockStmt, Statement, TypedVar}
 import astnodes.types.{PyType, ValueType}
 
-case class FuncDef(funcName: Identifier, params: List[TypedVar], returnType: Option[ValueType], funcBody: List[Statement]) extends Declaration {
+// if return type is not defined, then default as NoneType
+case class FuncDef(funcName: Identifier, params: List[TypedVar], returnType: ValueType, funcBody: BlockStmt) extends Declaration {
 
 }

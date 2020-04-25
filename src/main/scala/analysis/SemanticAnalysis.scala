@@ -1,6 +1,7 @@
 package analysis
 
-import astnodes.Program
+import astnodes.expressions.{AssignExpr, Identifier}
+import astnodes.{BlockStmt, ForStmt, Program}
 
 class SemanticAnalysis {
 
@@ -9,10 +10,10 @@ class SemanticAnalysis {
         program.dispatch(declarationAnalyzer)
 
         if (program.errors.isEmpty) {
-            val typeChecker = new TypeChecker()
+            val typeChecker = new TypeChecker(declarationAnalyzer.scopesMap,
+                declarationAnalyzer.classDecls, declarationAnalyzer.globalDecls)
             program.dispatch(typeChecker)
         }
-
         program
     }
 }

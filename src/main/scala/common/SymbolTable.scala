@@ -5,10 +5,11 @@ import scala.collection.mutable
 
 /**
  * symbol table which stores function and variable symbols
+ *
  * @param parent possible parent table, None means no parent that is the top level
  */
 class SymbolTable[T](val parent: Option[SymbolTable[T]]) {
-    private val table: mutable.Map[String, T] = mutable.HashMap[String, T]()
+    val table: mutable.Map[String, T] = mutable.HashMap[String, T]()
 
     def get(name: String): Option[T] = {
         table.get(name) match {
@@ -17,7 +18,7 @@ class SymbolTable[T](val parent: Option[SymbolTable[T]]) {
         }
     }
 
-    def put(name: String, value: T):Unit = {
+    def put(name: String, value: T): Unit = {
         table.put(name, value)
     }
 
@@ -38,71 +39,27 @@ class SymbolTable[T](val parent: Option[SymbolTable[T]]) {
 }
 
 object SymbolTable {
-    val defaultGlobalSyms = new SymbolTable[PyType](None)
-    val classTable = new SymbolTable[ClassInfo](None)
 
-    // add some native symbols and functions
-    defaultGlobalSyms.put("range", FuncType("range", List(ClassType("int"), ClassType("int")), ListType(ClassType("int"))))
-    defaultGlobalSyms.put("type", FuncType("type", List(ClassType("object")), ClassType("type")))
-    defaultGlobalSyms.put("id", FuncType("id", List(ClassType("int"), ClassType("int")), ClassType("int")))
-    defaultGlobalSyms.put("len", FuncType("len", List(ClassType("list")), ClassType("int")))
-    defaultGlobalSyms.put("print", FuncType("print", List(ClassType("object")), ClassType("None")))
+    def getDefaultClassTable: SymbolTable[ClassInfo] = {
+        val classTable = new SymbolTable[ClassInfo](None)
+        // list type is not accessible to user, type annotation must be [T], type constructor is a must
+        List(ClassInfo.klassObject, ClassInfo.klassInt, ClassInfo.klassFloat,
+            ClassInfo.klassStr, ClassInfo.klassBool).foreach(x => classTable.put(x.className, x))
+        classTable
+    }
 
-    // native types
-    // type
-    private val klassType = ClassInfo("type", None, List(
-        FuncType("__eq__", List[ValueType](ClassType("type")), ClassType("bool")),
-    ))
+    def getDefaultGlobalSyms: SymbolTable[PyType] = {
+        // add some native symbols and functions
+        val defaultGlobalSyms = new SymbolTable[PyType](None)
+        defaultGlobalSyms.put("range", FuncType("range", List(ClassType("int"), ClassType("int")), ListType(ClassType("int"))))
+        defaultGlobalSyms.put("type", FuncType("type", List(ClassType("object")), ClassType("type")))
+        defaultGlobalSyms.put("id", FuncType("id", List(ClassType("int"), ClassType("int")), ClassType("int")))
+        defaultGlobalSyms.put("len", FuncType("len", List(ListType(ClassType("object"))), ClassType("int")))
+        defaultGlobalSyms.put("print", FuncType("print", List(ClassType("object")), ClassType("None")))
+        defaultGlobalSyms
+    }
 
-    // object
-    private val klassObject = ClassInfo("object", None, List(
-        FuncType("__eq__", List[ValueType](ClassType("object")), ClassType("bool")),
-        FuncType("__bool__", Nil, ClassType("bool")),
-    ))
-
-    // bool
-    private val klassBool = ClassInfo("bool", Some(klassObject), List(
-        FuncType("__eq__", List[ValueType](ClassType("int")), ClassType("bool")),
-        FuncType("__bool__", List[ValueType](ClassType("int")), ClassType("bool")),
-    ))
-
-    // int
-    private val klassInt = ClassInfo("int", Some(klassObject), List(
-        FuncType("__eq__", List[ValueType](ClassType("int")), ClassType("bool")),
-        FuncType("__bool__", Nil, ClassType("bool")),
-        FuncType("__lt__", List[ValueType](ClassType("int")), ClassType("bool")),
-        FuncType("__gt__", List[ValueType](ClassType("int")), ClassType("bool")),
-        FuncType("__le__", List[ValueType](ClassType("int")), ClassType("bool")),
-        FuncType("__ge__", List[ValueType](ClassType("int")), ClassType("bool")),
-    ))
-
-    // float
-    private val klassFloat = ClassInfo("float", Some(klassObject), List(
-        FuncType("__eq__", List[ValueType](ClassType("float")), ClassType("bool")),
-        FuncType("__bool__", Nil, ClassType("bool")),
-        FuncType("__lt__", List[ValueType](ClassType("float")), ClassType("bool")),
-        FuncType("__gt__", List[ValueType](ClassType("float")), ClassType("bool")),
-        FuncType("__le__", List[ValueType](ClassType("float")), ClassType("bool")),
-        FuncType("__ge__", List[ValueType](ClassType("float")), ClassType("bool")),
-    ))
-
-    // list
-    private val klassList = ClassInfo("list", Some(klassObject), List(
-        FuncType("__eq__", List[ValueType](ClassType("list")), ClassType("bool")),
-        FuncType("__bool__", Nil, ClassType("bool")),
-        FuncType("__len__", Nil, ClassType("int")),
-    ))
-
-    // str
-    private val klassStr = ClassInfo("str", Some(klassObject), List(
-        FuncType("__eq__", List[ValueType](ClassType("str")), ClassType("bool")),
-        FuncType("__bool__", Nil, ClassType("bool")),
-        FuncType("__len__", Nil, ClassType("int")),
-    ))
-
-    List(klassObject, klassInt, klassFloat, klassStr, klassList, klassBool, klassType).foreach(x=>classTable.put(x.className, x))
-
-    def apply[T](parent:SymbolTable[T]):SymbolTable[T] = {
+    def apply[T](parent: SymbolTable[T]): SymbolTable[T] = {
         new SymbolTable[T](Some(parent))
     }
 

@@ -276,7 +276,7 @@ class PyParser(val lexer: Lexer) {
                     reader.consume()
                     expr() match {
                         case Left(err) => return Left(err)
-                        case Right(e) => leftExpr = BinaryExpr(NotEqual(), leftExpr, e).setPos(e.pos).setPos(op.pos)
+                        case Right(e) => leftExpr = UnaryExpr(Not(), BinaryExpr(Equal(), leftExpr, e).setPos(e.pos)).setPos(op.pos)
                     }
                 case notTok@NOT() =>
                     reader.consume()

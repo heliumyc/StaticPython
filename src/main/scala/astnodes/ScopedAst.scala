@@ -1,0 +1,5 @@
+package astnodes
+
+trait ScopedAst {
+
+}

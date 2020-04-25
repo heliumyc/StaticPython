@@ -1,3 +1,3 @@
 package astnodes
 
-case class WhileStmt(condition:Expression, body:List[Statement]) extends Statement
+case class WhileStmt(condition: Expression, body: BlockStmt) extends Statement
