@@ -76,6 +76,8 @@ class DeclarationAnalyzer extends NodeAnalyzer[Unit] {
     override def analyze(node: FuncDef): Unit = {
         if (currentSymbols.isDeclared(node.funcName.name)) {
             this.emitError(PyError(s"Duplicated declaration: '${node.funcName.name}'", node.pos))
+        } else if (classDecls.isDeclared(node.funcName.name)) {
+            this.emitError(PyError(s"Function declaration shadows class: ${classDecls.get(node.funcName.name).get}", node.pos))
         } else {
             currentSymbols.put(node.funcName.name, FuncType(
                 node.funcName.name,
@@ -182,7 +184,7 @@ class DeclarationAnalyzer extends NodeAnalyzer[Unit] {
     }
 
     override def analyze(node: Identifier): Unit = {
-        if (!currentSymbols.findName(node.name)) {
+        if (!currentSymbols.findName(node.name) && !classDecls.isDeclared(node.name)) {
             // cannot find id symbol
             this.emitError(PyError(s"Symbol '${node.name}' is not found in scope", node.pos))
         }

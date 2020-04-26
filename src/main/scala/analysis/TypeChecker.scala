@@ -65,18 +65,21 @@ class TypeChecker(val scopesMap: mutable.HashMap[ScopedAst, SymbolTable[PyType]]
     }
 
     override def analyze(node: AssignExpr): Option[PyType] = {
-        val leftType = node.target.dispatch(this)
-        val rightType = node.value.dispatch(this)
-        if (leftType.isDefined && rightType.isDefined) {
-            if (!classUtils.isSubtype(leftType.get, rightType.get)) {
-                this.emitError(PyError(s"Assignment type is not compatible: " +
-                    s"declared type ${leftType.get} found ${rightType.get}", node.value.pos))
+        (for {
+            leftType <- node.target.dispatch(this)
+            rightType <- node.value.dispatch(this)
+        } yield {
+            // assignment coercion
+            // float is compatible for all int
+            if (leftType == ClassType.floatType && rightType == ClassType.intType) {
+                node.value.setCoersionType(ClassType.floatType)
+            } else if (!classUtils.isSubtype(leftType, rightType)) {
+                emitErrorAndNone(PyError(s"Assignment type is not compatible: " +
+                    s"declared type $leftType found $rightType", node.value.pos))
+            } else {
+                node.setInferredType(leftType)
             }
-            else {
-                node.setInferredType(leftType.get)
-            }
-        }
-        None
+        }).flatten
     }
 
     private def checkLeftOpRight(op: BinaryOp, leftType: PyType, rightType: PyType, position: Position): Option[PyType] = {
@@ -84,7 +87,26 @@ class TypeChecker(val scopesMap: mutable.HashMap[ScopedAst, SymbolTable[PyType]]
         val opName = Operator.operatorNameMap(op)
         val leftClass: ClassInfo = leftType match {
             case ClassType(name) => classDecls.get(name).get
-            case ListType(_) => ClassInfo.klassList
+            case ListType(leftEle) =>
+                // list has only is/+/*  three operators
+                op match {
+                    case Is() => return Some(ClassType.boolType)
+                    case Plus() => rightType match {
+                        case ListType(rightEle) =>
+                            if (leftEle == NoneType())
+                                return Some(rightType)
+                            else if (!classUtils.isSubtype(leftEle, rightEle))
+                                return emitErrorAndNone(PyError(s"list concatenation type mismatch: required: $leftType, found: $rightType", position))
+                            else
+                                return Some(leftType)
+                    }
+                    case Multiply() =>
+                        if (rightType != ClassType.intType)
+                            return emitErrorAndNone(PyError(s"list $op argument mismatch: required: <int>, found: $rightType", position))
+                        else
+                            return Some(leftType)
+                    case _ => return emitErrorAndNone(PyError(s"list does not have $op operator", position))
+                }
             case _: FuncType => return emitErrorAndNone(PyError("function does not have any binary operator defined", position))
             case TupleType(_) => ClassInfo.klassTuple
             case NoneType() => ClassInfo.klassNone
@@ -153,7 +175,10 @@ class TypeChecker(val scopesMap: mutable.HashMap[ScopedAst, SymbolTable[PyType]]
     override def analyze(node: Identifier): Option[PyType] = {
         currentSymbols.get(node.name) match {
             case Some(v) => node.setInferredType(v)
-            case None => emitErrorAndNone(PyError(s"cannot find symbol ${node.name}", node.pos))
+            case None => classDecls.get(node.name) match {
+                case Some(c) => node.setInferredType(ClassType(c.className))
+                case None => emitErrorAndNone(PyError(s"cannot find symbol ${node.name}", node.pos))
+            }
         }
     }
 
@@ -213,7 +238,7 @@ class TypeChecker(val scopesMap: mutable.HashMap[ScopedAst, SymbolTable[PyType]]
         // 1) infer all elements' common type
         val elementsWithNode = node.vars.map(x => (x, x.dispatch(this)))
         if (elementsWithNode.isEmpty) {
-            node.setInferredType(NoneType())
+            node.setInferredType(ListType(NoneType())) // this means empty list
         } else if (elementsWithNode.forall(_._2.isDefined)) {
             val inferredType = elementsWithNode.foldLeft[ValueType](NoneType())((t1: ValueType, t2: (Expression, Option[PyType])) => {
                 t2._2.get match {
@@ -253,8 +278,11 @@ class TypeChecker(val scopesMap: mutable.HashMap[ScopedAst, SymbolTable[PyType]]
             // if member is a function we might need to search all func with same name
             case ClassType(klass) =>
                 classDecls.get(klass) match {
+                    case None =>
+                        return emitErrorAndNone(PyError(s"cannot find type $klass", node.pos))
+                    case Some(x) if ClassInfo.isNativeType(x.className) =>
+                        return emitErrorAndNone(PyError(s"native type attributes cannot be accessed", node.pos))
                     case Some(x) => x
-                    case None => return emitErrorAndNone(PyError(s"cannot find type $klass", node.pos))
                 }
             case _: ListType => ClassInfo.klassList
             case _: TupleType => ClassInfo.klassTuple
@@ -301,6 +329,9 @@ class TypeChecker(val scopesMap: mutable.HashMap[ScopedAst, SymbolTable[PyType]]
             case c@ClassType(klassName) =>
                 val klass = classDecls.get(klassName)
                 if (klass.isDefined) {
+                    if (ClassInfo.isNativeType(klassName)) {
+                        return emitErrorAndNone(PyError(s"native types have no constructor", node.pos))
+                    }
                     val initParams = klass.get.getFuncMember("__init__").map(_.params).getOrElse(Nil)
                     (node.args, initParams, argsTypes).zipped.foreach { case (e, param, arg) =>
                         if (param == ClassType.floatType && arg == ClassType.intType) {
