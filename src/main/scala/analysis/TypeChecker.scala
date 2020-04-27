@@ -332,16 +332,21 @@ class TypeChecker(val scopesMap: mutable.HashMap[ScopedAst, SymbolTable[PyType]]
                     if (ClassInfo.isNativeType(klassName)) {
                         return emitErrorAndNone(PyError(s"native types have no constructor", node.pos))
                     }
-                    val initParams = klass.get.getFuncMember("__init__").map(_.params).getOrElse(Nil)
-                    (node.args, initParams, argsTypes).zipped.foreach { case (e, param, arg) =>
-                        if (param == ClassType.floatType && arg == ClassType.intType) {
-                            e.setCoersionType(ClassType.floatType)
-                        } else if (!classUtils.isSubtype(param, arg)) {
-                            return emitErrorAndNone(PyError(s"initialization args mismatch, " +
-                                s"required: (${initParams.mkString(",")}, " +
-                                s"found: (${argsTypes.mkString(",")}", node.pos))
+                    val initParams = klass.get.constructor.params
+                    if (node.args.length != initParams.length) {
+                        return emitErrorAndNone(PyError(s"constructor arguments lens mismatch, " +
+                            s"required: ${initParams.length}, " +
+                            s"found: ${node.args.length}", node.pos))
+                    } else
+                        (node.args, initParams, argsTypes).zipped.foreach { case (e, param, arg) =>
+                            if (param == ClassType.floatType && arg == ClassType.intType) {
+                                e.setCoersionType(ClassType.floatType)
+                            } else if (!classUtils.isSubtype(param, arg)) {
+                                return emitErrorAndNone(PyError(s"constructor args types mismatch, " +
+                                    s"required: (${initParams.mkString(",")}, " +
+                                    s"found: (${argsTypes.mkString(",")}", node.pos))
+                            }
                         }
-                    }
                     node.setInferredType(c)
                 } else {
                     emitErrorAndNone(PyError(s"invalid class type $c", node.pos))

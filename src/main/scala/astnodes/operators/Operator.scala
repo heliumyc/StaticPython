@@ -38,41 +38,79 @@ trait UnaryOp extends Operator
 trait BinaryOp extends Operator
 
 // comparison operator
-case class Equal() extends BinaryOp
+case class Equal() extends BinaryOp {
+    override def toString: String = "=="
+}
 
-case class Less() extends BinaryOp
+case class Less() extends BinaryOp {
+    override def toString: String = "<"
+}
 
-case class Greater() extends BinaryOp
+case class Greater() extends BinaryOp {
+    override def toString: String = ">"
+}
 
-case class GreaterEq() extends BinaryOp
+case class GreaterEq() extends BinaryOp {
+    override def toString: String = ">="
+}
 
-case class LessEq() extends BinaryOp
+case class LessEq() extends BinaryOp {
+    override def toString: String = "<="
+}
 
-case class In() extends BinaryOp
+case class In() extends BinaryOp {
+    override def toString: String = "in"
+}
 
-case class Is() extends BinaryOp
+case class Is() extends BinaryOp {
+    override def toString: String = "is"
+}
 
-case class And() extends BinaryOp
+case class And() extends BinaryOp {
+    override def toString: String = "and"
+}
 
-case class Or() extends BinaryOp
+case class Or() extends BinaryOp {
+    override def toString: String = "or"
+}
 
-case class Not() extends UnaryOp
+case class Not() extends UnaryOp {
+    override def toString: String = "not"
+}
 
 // arithmetic operator
-case class Positive() extends UnaryOp
+case class Positive() extends UnaryOp {
+    override def toString: String = "+"
+}
 
-case class Negative() extends UnaryOp
+case class Negative() extends UnaryOp {
+    override def toString: String = "-"
+}
 
-case class Plus() extends BinaryOp
+case class Plus() extends BinaryOp {
+    override def toString: String = "+"
+}
 
-case class Minus() extends BinaryOp
+case class Minus() extends BinaryOp {
+    override def toString: String = "-"
+}
 
-case class Multiply() extends BinaryOp
+case class Multiply() extends BinaryOp {
+    override def toString: String = "*"
+}
 
-case class Divide() extends BinaryOp
+case class Divide() extends BinaryOp {
+    override def toString: String = "/"
+}
 
-case class Modular() extends BinaryOp
+case class Modular() extends BinaryOp {
+    override def toString: String = "%"
+}
 
-case class FloorDiv() extends BinaryOp
+case class FloorDiv() extends BinaryOp {
+    override def toString: String = "//"
+}
 
-case class Power() extends BinaryOp
+case class Power() extends BinaryOp {
+    override def toString: String = "**"
+}

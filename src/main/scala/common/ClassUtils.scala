@@ -17,7 +17,8 @@ class ClassUtils(classDecls: SymbolTable[ClassInfo]) {
         targetType match {
             case ListType(t1) =>
                 sourceType match {
-                    case ListType(t2) => isSubtype(t1, t2)
+                    case ListType(t2) =>
+                        if (t2 == NoneType()) true else isSubtype(t1, t2)
                     case NoneType() => true
                     case _ => false
                 }

@@ -14,6 +14,8 @@ import scala.collection.mutable.ListBuffer
  */
 case class ClassInfo(className: String, baseClass: Option[ClassInfo], varTable: List[TypedVar], funcTable: List[FuncType]) {
 
+    var constructor:FuncType = FuncType("__init__", Nil, NoneType())
+
     def getVarMember(name: String): Option[TypedVar] = {
         varTable.find(_.identifier.name == name) match {
             case Some(v) => Some(v)
@@ -38,6 +40,12 @@ case class ClassInfo(className: String, baseClass: Option[ClassInfo], varTable: 
 }
 
 object ClassInfo {
+
+    def isNativeType(className: String): Boolean = {
+        className == "object" || className == "int" || className == "float" || className == "type" ||
+        className == "list" || className == "str" || className == "tuple" || className == "None" || className == "bool"
+    }
+
     // type
     val klassType: ClassInfo = ClassInfo("type", None, Nil, List(
         FuncType("__eq__", List[ValueType](ClassType.metaType), ClassType.boolType),
@@ -90,6 +98,8 @@ object ClassInfo {
         FuncType("__bool__", Nil, ClassType.boolType),
         FuncType("__len__", Nil, ClassType.intType),
         FuncType("__add__", List(ClassType.listType), ClassType.listType),
+        FuncType("__mul__", List(ClassType.intType), ClassType.listType),
+        FuncType("__in__", List(ClassType.objectType), ClassType.boolType),
     ))
 
     // tuple

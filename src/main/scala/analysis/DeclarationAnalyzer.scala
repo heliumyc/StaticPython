@@ -32,8 +32,8 @@ class DeclarationAnalyzer extends NodeAnalyzer[Unit] {
         program.addError(this.errors)
     }
 
-    private def isProtectedClass(name: String):Boolean = {
-        name == "list" || name == "str" || name == "int"|| name == "float" || name == "tuple" || name == "None" || name == "type"
+    private def isProtectedClass(name: String): Boolean = {
+        name == "list" || name == "str" || name == "int" || name == "float" || name == "tuple" || name == "None" || name == "type"
     }
 
     override def analyze(node: ClassDef): Unit = {
@@ -46,21 +46,26 @@ class DeclarationAnalyzer extends NodeAnalyzer[Unit] {
         } else if (isProtectedClass(node.baseClass.name)) {
             this.emitError(PyError(s"Base class cannot be ${node.baseClass.name}", node.pos))
         } else {
-            classDecls.put(node.className.name,
-                ClassInfo(node.className.name, classDecls.get(node.baseClass.name),
-                    node.declarations.collect {
-                        case VarDef(tpfVar, _) => tpfVar
-                    },
-                    node.declarations.collect {
-                        case f@FuncDef(funcName, params, returnType, _) =>
-                            if (funcName.name == "__init__" && returnType != NoneType()) {
-                                this.emitError(PyError(s"Class constructor's should not have any return type", f.pos))
-                            }
-                            FuncType(funcName.name, params.map(_.varType), returnType)
-                    }
-                )
+            val klass = ClassInfo(node.className.name, classDecls.get(node.baseClass.name),
+                node.declarations.collect {
+                    case VarDef(tpfVar, _) => tpfVar
+                },
+                node.declarations.collect {
+                    case f:FuncDef if f.funcName.name != "__init__" => f.toFuncType
+                }
             )
 
+            // check init must have no return type
+            node.declarations.foreach {
+                case f:FuncDef if f.funcName.name == "__init__" =>
+                    if (f.returnType != NoneType()) {
+                        this.emitError(PyError(s"Class constructor's should not have any return type", f.pos))
+                    }
+                    klass.constructor = f.toFuncType
+                case _ =>
+            }
+
+            classDecls.put(node.className.name, klass)
             globalDecls.put(node.className.name, ClassType(node.className.name))
 
             // this is the scope inside of class
